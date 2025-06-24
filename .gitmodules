@@ -1,0 +1,6 @@
+[submodule "script/content_merge"]
+	path = script/content_merge
+	url = git@github.com:Arxoto/content_merge.git
+[submodule "workspace/mpv-install"]
+	path = workspace/mpv-install
+	url = git@github.com:Arxoto/mpv-install.git
