@@ -1,0 +1,34 @@
+sarasa-fixed-slab-cl-regular.ttf
+
+sarasa  字体家族 更纱
+fixed   西文字符字形 分为 Gothic UI Mono Term Fixed
+slab    衬线 类似于顿笔
+cl      汉字字形
+regular 字重 细到粗 extralight light regular semibold bold 再加上 italic 为意大利体/斜体
+
+
+        等宽    弯引号  破折号  连字
+Gothic  no      全宽    全宽    no
+UI      no      半宽    全宽    no
+Mono    yes     半宽    全宽    yes
+Term    yes     半宽    半宽    yes
+Fixed   yes     半宽    半宽    no
+
+
+SC  Simplified Chinese 简体中文
+TC  Traditional Chinese 繁体中文
+CL  Classical 旧字体汉字
+HC  HongKong Chinese
+J   Japaness 日式
+K   Korean 朝鲜/韩
+
+
+e.g.,
+|ab|cd|ef|1iIl
+|阿|松|大|0oOQDB8
+EN |, . : ; ? ! \ | () | [] | <> |
+CN |，。：；？！、|（）|【】|《》|
+EN | $_ | __ | ^^ | "" | '' | `` |
+CN | ￥ |——|……|“”|‘’|··|
+<-> -> <- --> <-- <= >= == === --- _|_
+@ # % ^ & * / \ - + _ =

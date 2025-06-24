@@ -1,0 +1,5 @@
+{
+    "editor.fontFamily": "'Sarasa Mono SC', 'UbuntuMono Nerd Font Propo', Consolas, 'Courier New', monospace",
+    "editor.fontLigatures": true, // 使用带连字字体
+    "editor.unicodeHighlight.nonBasicASCII": false, // 中文字符不高亮
+}

@@ -1,0 +1,14 @@
+<Configuration>
+<MappedFolders>
+  <MappedFolder>
+    <HostFolder>D:\Downloads\sandbox</HostFolder>
+    <SandboxFolder>C:\sdb</SandboxFolder>
+    <ReadOnly>false</ReadOnly>
+  </MappedFolder>
+</MappedFolders>
+
+<LogonCommand>
+  <Command>explorer.exe C:\sdb</Command>
+</LogonCommand>
+
+</Configuration>
