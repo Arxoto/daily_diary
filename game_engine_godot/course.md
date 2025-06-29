@@ -56,10 +56,14 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
     - 添加自定义的输入按键和对应的动作名称
     - 右侧加号配置监听的按键事件
     - 脚本中使用 Input 类的方法获取输入
+    - 左右移动可使用 Input.get_axis 方法根据两个按键自动得到正负一的值
+    - 使用默认方法 is_zero_approx 判断值是否为零
+    - 使用 move_and_slide 自动根据速度和碰撞计算位置
   - 若要脚本中控制对应子节点
     - 拖动对应子节点
     - 摁住 Ctrl 然后松开鼠标左键，能自动为节点创建变量
     - 如使用 AnimationPlayer 的 play 方法播放动画
+      - 每帧都可以调用，应该内部维护了一个状态，不会重复播放相同的内容
     - 如控制 Sprite2D 的 flip_h 属性控制水平翻转
 - 在世界根节点上实例化子场景-选择player添加实例
 
@@ -117,3 +121,175 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
   - 一般图层至少分为：背景、物理碰撞层、前景
 
 ## 视差背景
+
+给予立体感的背景
+
+- 在 World 根节点添加子节点 【ParallaxBackground】
+- 在 【ParallaxBackground】 节点下添加子节点 【ParallaxLayer】 （即一个图层）
+- 添加大背景（天空）
+  - 摁住 Ctrl 键拖动图片至画布中，即将图片作为子节点添加到当前选中节点
+  - 设置 【ParallaxLayer】 的相对移动速度，检查器 【Motion】 下的 【Scale】 属性
+  - 此时仍然是一张图作为背景，可在 【Mirroring】 属性中编辑，即可在对应轴长度后自动进行拼接（无限长）
+- 添加独立元素（树林）
+  - 将图片拖入画布，若想取图片中的部分，如下
+  - 打开 【Region】 属性，点击 【编辑区域】
+  - 在 【区域编辑器】 中，吸附模式修改为 【栅格吸附】 ，将对应部分选中，拖动到想要的位置
+  - 选中对应图片，摁住 Ctrl+D 进行复制，直至能将屏幕沾满（或者到你想要的长度）
+  - 同上配置镜像效果，注意 【Scale】 属性配置稍大值（小于1）
+  - BUG修复：
+    - 因为启用了图片【Sprite】节点的纹理区域(【Region】)
+    - 目前版本这个功能与相机【Camera2D】的平滑移动有冲突
+    - 会导致相机移动时在拼接处偶尔闪过白线
+    - 规避方法是手动提取图片不使用区域功能，或者不要进行无缝拼接
+- 若想添加前景
+  - 将 【ParallaxBackground】 中 【CanvasLayer】 的 【Layer】 属性设置一个较大值（默认图层在0层，大于即可）
+  - 将 【ParallaxLayer】 的 【Scale】 属性设置为大于1的值（比相机快）
+- 配置好前景后景后，若不想误触
+  - （可选）将前景后景放到一个节点下
+  - 选中该节点，在画布上方工具栏中，激活【锁】和【编组】
+  - 需要编辑时将【编组】取消即可选中
+
+## 角色运动控制
+
+编程控制角色运动
+
+- 使用函数 move_toward 可自动计算最大速度限制下的当前速度，起到加减速的效果
+- 实现一个动态机来自动播放对应动画（参考自UE）
+  - 可新建脚本并配置类名，之后能在节点中选择这个节点类
+  - 可将状态划分，提供一个中间态，并在状态刷新的外面循环直到非中间态出现
+- 可将动作控制拆解如下，达到解耦合的目的
+  - 按键操作视为 want
+  - 条件判断视为 can
+  - 根据 want 和 can 决定行为 do
+  - 行为加上额外判断决定实际播放动画（如两个动作之间的过渡、不同速度奔跑等）
+
+操作优化
+
+- 部分动画允许打断操作会更流畅
+- 空中的加速度可以较地面稍微大点
+- 相似行为不同表现（不同速度奔跑、不同高度落下）
+- CoyoteTime 郊狼时间（离开地面的一小段时间内仍然可以跳跃）
+  - 在 Player 节点下添加 Timer 节点
+  - 检查器中 【WaitTime】 修改成较小值 如 0.1s
+  - 启用 【OneShot】 令其只倒计时一次
+  - 代码中触发条件为在 move_and_slide 前后对比 is_on_floor 函数的值是否改变，注意排除主动跳跃的情况
+    - 侧面说明 is_on_floor 是一个实时计算的结果，在同一帧中可以实时计算
+- 允许到地面前的一小段时间内摁下跳跃键，在接触地面后直接跳跃
+  - 在 _unhandled_input 方法中启动计时
+- 通过跳跃键的摁住时长控制跳跃高度
+  - 在 _unhandled_input 方法中
+  - 松开按键时提前设置垂直速度为跳跃速度的一半（正常是重力逐渐改变）
+  - 注意与上面的计时器联动易产生BUG：松开时需要停止计时器（面向过程编码时容易遇到这种问题）
+- 连招
+  - 在脚本中添加导出变量 can_combo
+  - 动画播放器中将该变量加入关键帧
+
+动画状态机，可能需要根据环境来判断播放哪种动画，如手部脚部碰撞检测
+
+- 因为手部方向与人物方向是耦合的，因此把 【Sprite2D】 节点挂在单独的节点下
+  - 节点树的 【Sprite2D】 节点右键 【重设父节点为新节点】 新建 【Node2D】 节点，命名 Graphics
+  - 代码逻辑中控制 【Graphics】 节点的翻转来控制人物的朝向翻转
+- 在 【Graphics】 节点下新增子节点 【RayCast2D】 节点，射线碰撞检测
+- 脚本中使用方法 `ray_cast.is_colliding()` 判断是否有物理碰撞
+
+## 敌人AI
+
+- 大部分逻辑与角色控制相同
+- 玩家检测同样可用 【RayCast2D】 节点进行碰撞检测
+  - 需要注意碰撞属性，同时建议配置不同碰撞层的名称
+    - 【CollosionLayer】 配置物体位于哪个碰撞层上（被碰撞检测）
+    - 【CollosionMask】 配置物体能与哪个碰撞层的物体碰撞
+  - 需要注意脚本中进行翻转后 `ray_cast.is_colliding()` 方法返回的仍然为之前的值
+    - 可能是引擎做的缓存，也可能是此时仅仅设置了翻转属性实际还未生效
+    - 使用方法 `ray_cast.force_raycast_update()` 强制在一帧内刷新
+  - 一般模拟视线检测需要同时判断环境层和玩家层两个碰撞层，然后通过 is 关键字来判断看到的是墙还是玩家
+
+## 攻击判定
+
+攻击判定框 Hitbox 受击判定框 Hurtbox
+
+- 脚本类判定框继承自 Area2D 节点
+- Hitbox 中有信号 `signal hit(hurtbox)`
+- Hurtbox 总有信号 `signal hurt(hitbox)`
+- 在自定义方法中使用 `signal.emit(xx)` 发送信号
+- 在初始化方法 `_init()` 中使用 `area_entered.connect(func)`
+  - 将自定义方法作为信号回调方法链接至 area_entered 信号
+- 在敌人玩家 【Graphics】 节点下添加攻击框和受击框类
+  - 配置 Hitbox 对应的碰撞层（参考配置：不位于任何层，检测受击层；玩家和敌人的层可以分开，看业务逻辑）
+  - 配置 Hurtbox 的碰撞层，与上面参考配置相反
+  - 在 Hitbox 节点下添加 CollisionShape2D 节点来实际进行碰撞检测（可以添加多个来组成复杂形状）
+  - 连招场景下需要配置多个攻击框，通过 CollisionShape2D 节点的 Disabled 属性控制是否碰撞
+    - 编辑攻击框形状时可能会影响其他攻击框
+      - CollisionShape2D 的 Shape 属性是 RectangleShape2D 资源，而资源在复制节点时仍然是共享的
+      - 属性右侧下拉框，选择【唯一化】即可
+- 处理受伤信号（连接信号的另一种方法）
+  - 点击 Hurtbox 在右侧选中节点页签
+  - 在信号中双击 hurt 信号
+  - 将信号连接至角色的主节点（自动在脚本里创建接收方法）
+
+## 受伤和死亡
+
+- 创建新类 Stats ，继承自 Node
+- 将属性 max_health 设置为 @export 允许导出给节点设置
+- 将属性 health 设置为 @onready 将该属性的初始化延后到 @export 之后
+- 可选：给 health 变量配置 `set(v)` 方法 `v = clampi(v, 0, max_health)` 限制 health 变量的上限
+  - 注意函数里面的 i 是 int 的意思
+- 在受伤信号回调方法中，进行扣血计算，最后调用 `queue_free()` 将节点删除
+- 受伤动画中修改 Hitbox 的 Area2D 下的 Monitoring 属性，临时取消攻击效果
+- 死亡动画中修改 Hurtbox 的 Area2D 下的 Monitorable 属性，取消受伤效果
+- 死亡动画可用 CanvasItem 的 Visibility 下的 Modulate 属性达到淡出效果
+- 可选：死亡动画最后调用方法清理节点
+  - 动画添加轨道，选择【方法调用】，选择对应角色
+  - 在最后添加关键帧，选择对应 `die()` 方法
+
+若在受伤信号回调方法中直接修改状态，则状态机的功能不够聚焦，建议回调方法中仅记录收到伤害
+
+- 创建新类 Damage ，继承自 RefCounted （更底层的就需要手动管理内存了）
+- 属性 `amount: int` 意味收到的伤害，属性 `source: Node2D` 记录伤害来源
+- 角色脚本添加属性 `pending_damage: Damage` 记录待处理属性，也可以改造成数组
+
+## 状态面板
+
+- 创建空场景
+- 根节点创建为 HBoxContainer 是一个将子控件横向排列的容器
+- 可选：修改 Control 下的 Transform 的 Size 为 0 ，让内容将他撑起来
+- 头像
+  - 增加 TextureRect 节点显示头像
+  - 将 Texture 设置为 AtlasTexture 图集纹理
+    - 允许将图片视为图集然后从中选择区域，因为该节点原生不支持区域选择
+  - 从人物动作中将头像裁剪
+  - 将 TextureRect 【重设父节点为新节点】为 PanelContainer 是专门为控件提供背景的容器
+  - 将 Control 下的 ThemeOverrides-Styles-Panel 设置 StyleBoxTexture
+  - 展开并拖入素材 HUD
+  - 编辑子区域
+  - 现在已经有了基础的效果，但是背景和头像的像素大小不对应
+    - 因为根节点的内容还是被头像撑起的，然后才是背景根据大小自动缩放
+  - 手动将 PanelContainer 的 Layout 下的 CustomMinimumSize 调整为和头像像素一致
+  - 现在背景将根节点撑大，但是同时导致头像也被放大了
+  - 调整 TextureRect 的 StretchMode 为 KeepAspectCentered ，保持长宽比缩放并居中
+  - 调整 PanelContainer 的 ThemeOverrides-Styles-Panel 中的 ContentMargins 设置容器与内容的间距
+- 血条
+  - 根节点新建子节点 TextureProgressBar
+  - 属性 Textures 下的 Under 可用作背景、 Over 用作边框、 Progress 用作进度条
+    - ProgressOffset 设定偏移量用于边框等对齐
+  - 同样选择 AtlasTexture 设置素材
+  - 修改 Range 下的 Value 使其显示
+    - 将 MaxValue 设为 1 ，将 Step 设为 0 ，这样 Value 可设置为浮点数，较为丝滑
+  - 调整 TextureProgressBar 的 Control 的 Layout-ContainerSizing-Vertical 为【居中收缩】
+  - 编写脚本 `@export var stats: Stats` 用于让外界传入
+  - 在 Stats 类中增加信号，每次修改时发送信号
+  - 在血条脚本中 `_ready()` 方法中对信号进行连接
+- 血条扣血动画
+  - 复制血条设为原来的子节点，命名 EasedHealthBar
+  - 调整 Progress 唯一化并选择另一个素材
+  - 使用画布工具栏靠右的【锚点预设】选择【整个矩形】，这样就能以其父节点进行定位
+  - 调整 CancasItem 下的 Visibility-ShowBehindParent 让其在父节点后面绘制
+  - 脚本中的血量更新方法中进行补间动画
+    - `create_tween().tween_property(eased_health_bar, "value", percentage, 0.3)`
+    - 其中 `percentage` 是目标值，即扣血后的血量
+- 角色挂载状态面板
+  - 实例化子场景，在检查器指定刚刚导出的变量 stats 为对应的属性
+  - 现在面板会跟随玩家角色移动（敌人的血条也可以类似操作）
+- 若想让面板固定在屏幕左上角
+  - 选定面板子场景右键【重设父节点为新节点】选择 CanvasLayer
+  - 在画布上调整位置即可
