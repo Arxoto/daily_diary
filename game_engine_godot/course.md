@@ -9,23 +9,25 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
 像素风游戏的常用配置（画面放大三倍）
 
 - 左上角-项目-项目设置
-- 打开右上角高级设置-显示-窗口
+- 打开右上角高级设置，显示-窗口
   1. 窗口宽度高度覆盖调整至视口大小
   1. 视口大小调整至原来的 1/3 （直接在后面输入/3能自动计算）
   1. 拉伸-模式 选择 canvas_items
+- 渲染-纹理-默认纹理过滤-【Nearest】（像素风的清晰化）
 - 左上角-编辑器-编辑器设置-文本编辑器-补全-启动【添加类型提示】
 
 添加世界
 
 - 场景-创建根节点处，创建【2D场景】，重命名为【World】
 - 添加子节点，类型【TileMap】
-- 右侧检查器-【TileMap】-【TileSet】-新建【TileSet】
+  - 新版 TileMap 被弃用，使用 TileMapLayer 代替
+- 右侧检查器 TileMapLayer-TileSet 新建 TileSet
 - 点击刚刚创建的【TileSet】展开
 - 展开【PhysicsLayers】，点击添加元素
 - 底部【TileSet】面板
-- 将图片资源拖入面板里的【图块】
+- 将图片资源拖入面板里的【图块源】
 - 若有弹框提示：施放自动在不透明纹理区域创建图块，选择否
-- 在基础图块中选择想要使用的图块
+- 在基础图块中选择想要使用的图块（设置工具）
 - 工作区中间的绘制工具-绘制属性【物理层0】-涂抹对应图块标识物理碰撞
 - 底部【TileMap】面板可选中图块在上面画布中绘画地图（左键绘制、右键擦除、Shift画直线、Ctrl画布中获取图块）
 
@@ -76,15 +78,35 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
 - 右侧检查器-Drag-启动【Horizontal】和【Vertical】打开水平垂直拖拽效果
 - 右侧检查器-PositionSmoothing-启用位置平滑
 - 为防止相机看到场景以外的空白，可设置【Limit】属性，并打开【Smoothed】平滑效果
-- 也可以在World根节点的脚本 _ready 里根据TileMap的矩形框的范围动态设定限制（注意单位是像素和TileSet元素个数的单位转换）
-  - 注意方法的生命周期，在 _ready 里设置 limit 的时候若相机已经超出了限制区域，会场景开始时就触发平滑移动
-  - 可在方法最后使用 reset_smoothing 方法在一帧内快速达到平滑移动的目的地
+- 也可以在World根节点的脚本 `_ready` 里根据TileMap的矩形框的范围动态设定限制
+  - 注意单位是像素和TileSet元素个数的单位转换
+  - 注意方法的生命周期，在 `_ready` 里设置 limit 的时候若相机已经超出了限制区域，会场景开始时就触发平滑移动
+  - 可在方法最后使用 `reset_smoothing()` 方法在一帧内快速达到平滑移动的目的地
+
+注意：
+
+- 若启用相机平滑后，人物移动出现模糊抖动，解决办法有两个
+  - Camera2D 的 ProcessCallback 属性设为 Physics
+  - 打开物理插值，但缺点是下面的功能：代码控制相机限制时设定初始位置瞬移会不生效
+    - 并且有警告 Camera2D 覆盖了 physics_process 由于使用了物理插值（解决办法是同时使用另一个方法）
+
+```
+	var used_rect := tile_map_layer.get_used_rect().grow(-1) # 缩小一格
+	var tile_size := tile_map_layer.tile_set.tile_size
+	
+	camera_2d.limit_top = used_rect.position.y * tile_size.y
+	camera_2d.limit_bottom = used_rect.end.y * tile_size.y
+	camera_2d.limit_left = used_rect.position.x * tile_size.x
+	camera_2d.limit_right = used_rect.end.x * tile_size.x
+	
+	camera_2d.reset_smoothing()
+```
 
 ## 地形编辑
 
 此时测试环境较为简略，本章简单介绍了几种 TileMap 使用方式，搭建较为完整的场景
 
-- 在下方工作区 TileSet 选中要使用的各个元素
+- 在下方工作区 TileSet 选中要使用的各个元素（设置工具）
 - 若元素向边缘有拓展
   - 中间的选择工具，选中对应图块，使用四周的小圆圈进行拓展
   - 配置中心位置（图块的中心）：选择工具-渲染-纹理原点
@@ -113,8 +135,10 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
   - 图块中 Shift 同时选中多个图块
   - 工作区上方的骰子点亮即可
 - 若想批量操作，让选中的图块中随机选择几个图块进行绘制
-  - 调整散布属性（图块默认概率为1，散布的值即为空白的概率，如：散布值为2，那么空白:图块1:图块2:...=2:1:1:...）
+  - 调整散布属性（图块默认概率为1，散布的值即为空白的概率
+  - 如：散布值为2，那么空白:图块1:图块2:...=2:1:1:...）
 - 若想调整图块与扩展图块间的优先级，可使用 TileMap 的图层功能
+  - 新版 TileMap 因性能原因被弃用了，直接控制 TileMapLayer 节点树上的顺序即可（越下面的越靠前）
   - 检查器-Layers-添加元素为各个图层命名
   - 工作区上方右边选择对应图层
   - 切换对应图层即在地形编辑器的对应图层中绘制（所以叫做 TileMap 的图层功能）
@@ -136,7 +160,7 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
   - 在 【区域编辑器】 中，吸附模式修改为 【栅格吸附】 ，将对应部分选中，拖动到想要的位置
   - 选中对应图片，摁住 Ctrl+D 进行复制，直至能将屏幕沾满（或者到你想要的长度）
   - 同上配置镜像效果，注意 【Scale】 属性配置稍大值（小于1）
-  - BUG修复：
+  - BUG修复（截止至 Godot v4.4.1 仍未修复）：
     - 因为启用了图片【Sprite】节点的纹理区域(【Region】)
     - 目前版本这个功能与相机【Camera2D】的平滑移动有冲突
     - 会导致相机移动时在拼接处偶尔闪过白线
