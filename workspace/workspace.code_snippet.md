@@ -12,7 +12,7 @@
 workspace
 ```json
 {
-	"c_include_once":{
+	"c_include_once": {
 		"scope": "c,cpp",
 		"prefix": "include_once",
 		"body": [
@@ -74,28 +74,37 @@ workspace
 		"scope": "python",
 		"prefix": "log_get",
 		"body": [
-		    "import logging",
-		    "",
-		    "",
-		    "LOG = logging.getLogger()",
-		    "",
-		    "",
-		    ""
+			"import logging",
+			"",
+			"",
+			"LOG = logging.getLogger()",
+			"",
+			"",
+			""
 		],
 		"description": ""
 	},
 	"python_log_init": {
 		"scope": "python",
-	    "prefix": "log_init",
-	    "body": [
-	      	"logging.basicConfig(",
-	      	"    format=\"%(asctime)s [%(name)s::%(levelname)s] %(message)s\",",
-	      	"    level=logging.INFO,",
-	      	")",
+		"prefix": "log_init",
+		"body": [
+			"logging.basicConfig(",
+			"    format=\"%(asctime)s [%(name)s::%(levelname)s] %(message)s\",",
+			"    level=logging.INFO,",
+			")",
 			"",
 			""
-	    ],
-	    "description": ""
-	}
+		],
+		"description": ""
+	},
+	"gdscript_node": {
+		"scope": "gdscript",
+		"prefix": "import_node",
+		"body": [
+			"@onready var ${1:variable_name}: ${1/(^|_)(\\w)/${2:/upcase}/g} = $${1/(^|_)(\\w)/${2:/upcase}/g}",
+			""
+		],
+		"description": ""
+	},
 }
 ```
