@@ -45,16 +45,19 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
   - 右侧检查器-Shape-选择【新建RectangleShape2D】创建矩形碰撞箱
 - 添加子节点【AnimationPlayer】用来定义动画（用来控制其他子节点的各项属性如何根据时间轴改变）
   - 下方工作区-动画-创建新动画
-  - 工作区的上方右侧调整总长度和打开循环
+  - 工作区的上方右侧调整总长度和打开循环（一般像素风格一帧持续 0.1s ，下方的吸附选择 0.1s ）
   - 切换到【Sprite2D】节点，将一下属性新建轨道并插入关键帧
     - Region-Rect 因为不同动画的区域范围可能会不一样
     - Animation-Hframes 因为不同的动画（动作集）的Hframes可能会不一样
     - Frame 需要将对应动作帧依次加入，注意工作区的下面【吸附】调整对应的每帧时间，像素游戏可以0.1秒1帧
     - 注意要保持所有动画的轨道一致，不然会有状态残留导致各种BUG
+      - 在 4.2+ 的版本中，能开启 AnimationPlayer-AnimationMixer-Deterministic 属性，混合使用确定性算法
+      - 开启后，默认使用 "RESET" 动画来对缺少的轨道动画赋值
+      - 特别的，对于 texture 轨道， "RESET" 动画不起作用，原因未知，暂手动赋值处理
 - 根节点添加脚本自定义控制逻辑
   - 注意物理引擎相关的逻辑写在 _physics_process 方法中
   - 根据重力下降
-  - 根据输入移动 
+  - 根据输入移动
     - 项目-项目设置-输入映射页签
     - 添加自定义的输入按键和对应的动作名称
     - 右侧加号配置监听的按键事件
@@ -67,7 +70,10 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
     - 摁住 Ctrl 然后松开鼠标左键，能自动为节点创建变量
     - 如使用 AnimationPlayer 的 play 方法播放动画
       - 每帧都可以调用，应该内部维护了一个状态，不会重复播放相同的内容
-    - 如控制 Sprite2D 的 flip_h 属性控制水平翻转
+    - 如控制 Sprite2D 的 flip_h 属性控制水平翻转 `sprite_2d.flip_h = want_move_direction < 0`
+      - 高级点的方法：将一个 Node2D 作为 Sprite2D 的父节点，修改其 Transform-Scale-x 属性控制翻转
+      - `body.scale.x = -1.0 if want_move_direction < 0 else 1.0`
+      - 注意：修改路径后启动游戏可能会警告 "AnimationMixer couldn't resolve track" ，重启 godot 即可解决
 - 在世界根节点上实例化子场景-选择player添加实例
 
 ## 相机
