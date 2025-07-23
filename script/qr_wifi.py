@@ -62,7 +62,7 @@ class Wifi:
 
 if __name__ == "__main__":
     current_dir = os.path.dirname(__file__)
-    file_path = os.path.join(current_dir, "../0private_0rigin/0_wifi.sh")
+    file_path = os.path.join(current_dir, "../0private_origin/0_wifi.sh")
 
     wifi_name = ""
     wifi_pwd = ""
