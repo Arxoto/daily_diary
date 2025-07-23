@@ -29,7 +29,7 @@ def test():
 
 def main():
     current_dir = os.path.dirname(__file__)
-    key_path = os.path.join(current_dir, "../0private_0rigin/0_github_2FA_key")
+    key_path = os.path.join(current_dir, "../0private_origin/0_github_2FA_key")
     if not os.path.isfile(key_path):
         raise Exception("has no github_2FA_key")
 
