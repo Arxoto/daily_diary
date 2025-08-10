@@ -243,6 +243,7 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
   - 多个特效区分（发色、残影、爆发效果）
   - 短暂的失控时间（0.15s内无法操作）
   - 短暂卡帧（4帧0.06s）和镜头抖动
+  - 参考其他动作游戏 《战神5》弹反10帧/0.15s 《只狼》弹反15帧/0.25s 《黑神话》铜头铁臂25帧
 - 手感优化
   - 土狼时间、跳跃预读指令
   - 冲刺撞墙后竖直方向仍然能够滑动、跳跃头磕到不会阻止前进（碰撞使用胶囊体）
@@ -284,9 +285,11 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
 
 - 大部分逻辑与角色控制相同
 - 玩家检测同样可用 【RayCast2D】 节点进行碰撞检测
-  - 需要注意碰撞属性，同时建议配置不同碰撞层的名称
+  - 需要注意碰撞属性，同时建议配置不同碰撞层的名称【 CharacterBody2D-CollisionObject2D-Collision 】
     - 【CollosionLayer】 配置物体位于哪个碰撞层上（被碰撞检测）
     - 【CollosionMask】 配置物体能与哪个碰撞层的物体碰撞
+    - 建议 1 命名为 Environment ； 2 命名 Player ； 3 命名 Character （中立生物或敌人）; 4 命名 Hurtbox ；
+    - 注意物体碰撞和射线检测需要一起调整
   - 需要注意脚本中进行翻转后 `ray_cast.is_colliding()` 方法返回的仍然为之前的值
     - 可能是引擎做的缓存，也可能是此时仅仅设置了翻转属性实际还未生效
     - 使用方法 `ray_cast.force_raycast_update()` 强制在一帧内刷新
@@ -298,13 +301,17 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
 
 - 脚本类判定框继承自 Area2D 节点
 - Hitbox 中有信号 `signal hit(hurtbox)`
-- Hurtbox 总有信号 `signal hurt(hitbox)`
-- 在自定义方法中使用 `signal.emit(xx)` 发送信号
-- 在初始化方法 `_init()` 中使用 `area_entered.connect(func)`
-  - 将自定义方法作为信号回调方法链接至 area_entered 信号
+- Hurtbox 中有信号 `signal hurt(hitbox)`
+- 新建自定义方法 `on_area_entered(hurtbox: HurtBox)` 使用 `signal.emit(xx)` 发送信号
+- 在初始化方法 `_init()` 中使用 `area_entered.connect(on_area_entered)`
+  - 将自定义方法作为信号回调方法链接至 `area_entered` 信号，这样当 Area2D 碰撞时会自动发送 hit/hurt 信号
+  - 一般信号发送只在一个里实现，这里仅在 Hitbox 中实现
 - 在敌人玩家 【Graphics】 节点下添加攻击框和受击框类
-  - 配置 Hitbox 对应的碰撞层（参考配置：不位于任何层，检测受击层；玩家和敌人的层可以分开，看业务逻辑）
-  - 配置 Hurtbox 的碰撞层，与上面参考配置相反
+  - 若想实现部位伤害需要同时创建多个判定框，其中仅一个受击框负责处理伤害，其他受击框负责专门处理部位伤害效果
+  - 配置 Hitbox 对应的碰撞层（建议攻击框范围较为准确）
+  - 配置 Hurtbox 的碰撞层，与上面参考配置相反（建议受击框根据难度调整，如玩家较小、敌人较大）
+  - 参考 Hitbox 的 Area2D.Monitorable=false CollisionObject2D.Layer=null CollisionObject2D.Mask=4
+  - 参考 Hurtbox 的 Area2D.Monitoring=false CollisionObject2D.Layer=4 CollisionObject2D.Mask=null
   - 在 Hitbox 节点下添加 CollisionShape2D 节点来实际进行碰撞检测（可以添加多个来组成复杂形状）
   - 连招场景下需要配置多个攻击框，通过 CollisionShape2D 节点的 Disabled 属性控制是否碰撞
     - 编辑攻击框形状时可能会影响其他攻击框
