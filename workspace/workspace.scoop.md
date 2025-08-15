@@ -13,8 +13,8 @@ scoop import .\workspace\workspace.scoop.json
 ```
 $env:SCOOP='D:\develop\scoop'
 $env:SCOOP_GLOBAL='D:\develop\scoop\GlobalScoopApps'
-$env:SCOOP='C:\develop\Scoop'
-$env:SCOOP_GLOBAL='C:\develop\Scoop\GlobalScoopApps'
+#by_default $env:SCOOP='C:\Users\<user>\scoop'
+#by_default $env:SCOOP_GLOBAL='C:\ProgramData\scoop'
 [Environment]::SetEnvironmentVariable('SCOOP', $env:SCOOP, 'User')
 [Environment]::SetEnvironmentVariable('SCOOP_GLOBAL', $env:SCOOP_GLOBAL, 'Machine')
 mkdir $env:SCOOP_GLOBAL
@@ -30,7 +30,7 @@ iwr -useb get.scoop.sh | iex
 # (or) Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
 ```
 
-配置代理
+配置代理（先自行安装 clash-verge-rev ）
 
 ```
 scoop config proxy localhost:7898
@@ -107,11 +107,12 @@ scoop install qbittorrent-enhanced motrix aria-ng-gui neatdownloadmanager # emul
 # main
 scoop install sing-box v2ray xray
 # extras/
-scoop install clash-nyanpasu clash-verge-rev v2rayn telegram discord # or https://discord.com/app
+scoop install clash-nyanpasu v2rayn telegram # discord use https://discord.com/app
 
 # book picture
 # extras/
 scoop install neeview # sumatrapdf
+scoop install imageglass exifglass
 # imageglass    Star 7K CSharp
 # jpegview-fork Star 2k Cpp
 # qview         Star 2k Cpp
@@ -139,7 +140,7 @@ sudo scoop install -g SarasaGothic-SC UbuntuMono-NF-Propo # 优雅中文字体�
 # extras/
 scoop install everything # translucenttb eartrumpet quicklook
 # dorado/
-scoop install snipaste-beta # trafficmonitor
+scoop install snipaste # trafficmonitor
 
 # extras/
 scoop install screentogif sharex
@@ -174,7 +175,7 @@ scoop install shotcut audacity
 # 3D建模
 scoop install blender
 # 2D动画
-scoop install opentoonz # enve找不到
+# scoop install opentoonz # enve找不到
 # 游戏引擎
 scoop install godot
 ```
@@ -182,7 +183,7 @@ scoop install godot
 ## hold version
 
 ```
-scoop hold nodejs pnpm
+# scoop hold nodejs pnpm
 # scoop hold gcc mingw rustup-msvc go # dotnet-sdk dotnet-desktop-runtime
 scoop hold vcredist2005 vcredist2008 vcredist2010 vcredist2012 vcredist2013 vcredist2022
 # scoop hold lav-filters-megamix-np madvr
