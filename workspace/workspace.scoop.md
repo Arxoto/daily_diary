@@ -1,16 +1,16 @@
 
 # [scoop]
 
-```pwsh
-scoop export > .\workspace\workspace.scoop.json
-scoop import .\workspace\workspace.scoop.json
+```shell
+scoop export > '.\workspace\workspace.scoop.json'
+scoop import '.\workspace\workspace.scoop.json'
 ```
 
 ## choose dir (admin)
 
 可选 修改 scoop 目录
 
-```
+```shell
 $env:SCOOP='D:\develop\scoop'
 $env:SCOOP_GLOBAL='D:\develop\scoop\GlobalScoopApps'
 #by_default $env:SCOOP='C:\Users\<user>\scoop'
@@ -24,7 +24,7 @@ mkdir $env:SCOOP_GLOBAL
 
 安装 scoop
 
-```
+```shell
 # (maybe) Set-ExecutionPolicy RemoteSigned -scope CurrentUser
 iwr -useb get.scoop.sh | iex
 # (or) Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
@@ -32,7 +32,7 @@ iwr -useb get.scoop.sh | iex
 
 配置代理（先自行安装 clash-verge-rev ）
 
-```
+```shell
 scoop config proxy localhost:7898
 
 # git and 7z
@@ -44,7 +44,7 @@ git config --global https.proxy 'socks5://localhost:7898'
 
 配置应用库
 
-```
+```shell
 scoop bucket add extras
 scoop bucket add java
 scoop bucket add versions
@@ -57,7 +57,7 @@ scoop bucket add dorado https://github.com/chawyehsu/dorado
 
 tools 基础必备的工具（或是被依赖的工具）
 
-```
+```shell
 scoop checkup
 
 # main/
@@ -67,7 +67,7 @@ scoop install sudo gsudo curl
 
 develop environment 开发环境和游戏环境
 
-```
+```shell
 # main/
 scoop install gcc mingw cmake ninja rustup-msvc python go nodejs pnpm # 由 rustup 管理 rust & cargo
 # java/
@@ -90,7 +90,7 @@ sudo scoop install vcredist2005 vcredist2008 vcredist2010 vcredist2012 vcredist2
 
 or just use 'export/import'
 
-```
+```shell
 # system clean program
 # extras/
 scoop install dismplusplus driverstoreexplorer geekuninstaller
@@ -107,7 +107,11 @@ scoop install qbittorrent-enhanced motrix aria-ng-gui neatdownloadmanager # emul
 # main
 scoop install sing-box v2ray xray
 # extras/
-scoop install clash-nyanpasu v2rayn telegram # discord use https://discord.com/app
+scoop install clash-nyanpasu flclash v2rayn
+# clash-nyanpasu 11k stars
+# flclash        20k stars
+# v2rayn         85k stars
+scoop install telegram # discord use https://discord.com/app
 
 # book picture
 # extras/
@@ -135,11 +139,11 @@ sudo scoop install -g SarasaGothic-SC UbuntuMono-NF-Propo # 优雅中文字体�
 
 常用的软件
 
-```
+```shell
 # start_with_os
 # extras/
 scoop install everything # translucenttb eartrumpet quicklook
-# dorado/
+# extras/
 scoop install snipaste # trafficmonitor
 
 # extras/
@@ -164,10 +168,14 @@ scoop install qtscrcpy
 
 玩具
 
-```
+```shell
 # extras/
-# 绘图 矢量 位图
-scoop install inkscape krita pixelorama
+# 图像
+scoop install inkscape gimp krita
+# inkscape 矢量图处理，类似 Illustrator
+# gimp     位图处理，类似 Photoshop ，定位图片合成
+# krita    位图、矢量图、动画都能做，定位绘画创作
+scoop install pixelorama
 # pixelorama 是使用 Godot 制作的免费开源 2D 精灵编辑器
 # libresprite 是 Aseprite 的免费开源分支
 # 视频音频
@@ -182,7 +190,7 @@ scoop install godot
 
 ## hold version
 
-```
+```shell
 # scoop hold nodejs pnpm
 # scoop hold gcc mingw rustup-msvc go # dotnet-sdk dotnet-desktop-runtime
 scoop hold vcredist2005 vcredist2008 vcredist2010 vcredist2012 vcredist2013 vcredist2022
@@ -192,11 +200,11 @@ sudo scoop hold -g SarasaGothic-SC UbuntuMono-NF-Propo
 
 ## check and restart
 
-```
+```shell
 scoop checkup
 scoop status
 ```
 
-```
+```shell
 shutdown -r -t 0
 ```
