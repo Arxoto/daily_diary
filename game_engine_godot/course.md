@@ -101,12 +101,12 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
 ```
 	var used_rect := tile_map_layer.get_used_rect().grow(-1) # 缩小一格
 	var tile_size := tile_map_layer.tile_set.tile_size
-	
+
 	camera_2d.limit_top = used_rect.position.y * tile_size.y
 	camera_2d.limit_bottom = used_rect.end.y * tile_size.y
 	camera_2d.limit_left = used_rect.position.x * tile_size.x
 	camera_2d.limit_right = used_rect.end.x * tile_size.x
-	
+
 	camera_2d.reset_smoothing()
 ```
 
@@ -185,9 +185,9 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
 
 编程控制角色运动
 
-- 瞬时输入的（攻击、跳跃）放入 _unhandled_input
-- 持续并且物理相关（移动）放入 _physics_process
-- 非物理的操作（暂停、UI）放入 _process
+- 瞬时输入的（攻击、跳跃）放入 _unhandled_input 同一渲染帧中最先执行
+- 持续并且物理相关（移动）放入 _physics_process 同一渲染帧中其次执行，并且执行后物理帧加一
+- 非物理的操作（暂停、UI）放入 _process         同一渲染帧中最后执行
 - 逻辑实现流程（状态机）
   1. 获取输入 `want` （将输入视为意图），可以有不同入口
       - 设计时必须考虑清楚意图表达于输入之间的映射（摁下、激活、抬起、释放），后期修改影响面较大
@@ -204,51 +204,10 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
       - 为了保证逻辑自洽，放至最后，效果和动画可能会有一帧延迟
 - 编码规范：
   - 仅在 `_physics_process()` 中进行物理反应（ `move_and_slide()` ）
-  - 速度的修改尽量平滑，使用 `move_toward(velocity.x, direction * speed, delta * acceleration)` 
+  - 速度的修改尽量平滑，使用 `move_toward(velocity.x, direction * speed, delta * acceleration)`
   - want 判断放在主体内（ Player 类中）
   - can 判断放在状态内部
   - 状态下也可挂载状态机（分层状态机），若不分层则使用 `if` 语句，判断条件参考状态机
-
-
-插入一些操作优化（参考 <https://www.youtube.com/watch?v=2S3g8CgBG1g> ）
-
-- 快速下降：上升的重力加速度较小，下降时较大 `if (v < 0) { a -= v; }`
-- 跳跃高度可控：
-  - 松开时速度减少一半
-  - 摁住松开时的重力加速度不同
-- 限制最大下降速度
-- 蹬墙跳
-- 跳跃时子弹时间
-- 额外滞空（竖直速度在+-0.1时重力减半）
-- 峰值奖励（竖直速度在+-0.1时水平速度加速度增加）
-- 视觉效果，动画拉伸，特效
-- 跳跃力量（？）
-- grace time (CoyoteTime)
-
-平台跳跃的最佳实践《蔚蓝》（ from <https://www.bilibili.com/video/BV1zkhGzcEXV/> or <https://www.youtube.com/watch?v=yorTG9at90g> ）
-- 奔跑
-  - 加速，加速度逐渐增大（先缓后陡），6帧达到最高速度（0.1s），话说这么短的时间加速曲线应该感受不出来
-  - 减速，减速度逐渐减小（先陡后缓），3帧静止（0.05s）
-  - 最高速，没有加速奔跑按键，相比其他游戏较慢，灵活流畅又具掌控感
-- 跳跃
-  - 跳跃高度约为3个人物身高（比其他平台游戏较低），弹跳活力避免漂浮感
-  - 允许空中转向，空中阻力较大、落点容易控制，场景静止、精确度提高
-  - 跳跃时人物动画弹性（挤压拉伸）、落地尘埃、震动
-- 攀爬
-  - 静止时，缓慢减少体力
-  - 攀爬时，快速减少体力
-  - 跳跃时，直接减少一部分体力
-- 冲刺
-  - 操作方向高速飞出
-  - 多个特效区分（发色、残影、爆发效果）
-  - 短暂的失控时间（0.15s内无法操作）
-  - 短暂卡帧（4帧0.06s）和镜头抖动
-  - 参考其他动作游戏 《战神5》弹反10帧/0.15s 《只狼》弹反15帧/0.25s 《黑神话》铜头铁臂25帧
-- 手感优化
-  - 土狼时间、跳跃预读指令
-  - 冲刺撞墙后竖直方向仍然能够滑动、跳跃头磕到不会阻止前进（碰撞使用胶囊体）
-  - 伤害判定框小于视觉
-  - 冲刺与跳跃、下蹲跳的结合
 
 - 部分动画允许打断操作会更流畅
 - 空中的加速度 acceleration 可以较地面稍微大点，阻力 resistance 可以稍微小点
@@ -347,7 +306,7 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
 
 - 创建空场景
 - 根节点创建为 HBoxContainer 是一个将子控件横向排列的容器
-- 可选：修改 Control 下的 Transform 的 Size 为 0 ，让内容将他撑起来
+- 可选：修改 Control-Leyout-Transform 的 Size 为 0 ，让内容将他撑起来
 - 头像
   - 增加 TextureRect 节点显示头像
   - 将 Texture 设置为 AtlasTexture 图集纹理
@@ -355,7 +314,7 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
   - 从人物动作中将头像裁剪
   - 将 TextureRect 【重设父节点为新节点】为 PanelContainer 是专门为控件提供背景的容器
   - 将 Control 下的 ThemeOverrides-Styles-Panel 设置 StyleBoxTexture
-  - 展开并拖入素材 HUD
+  - 双击展开并拖入素材 HUD
   - 编辑子区域
   - 现在已经有了基础的效果，但是背景和头像的像素大小不对应
     - 因为根节点的内容还是被头像撑起的，然后才是背景根据大小自动缩放
@@ -363,6 +322,7 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
   - 现在背景将根节点撑大，但是同时导致头像也被放大了
   - 调整 TextureRect 的 StretchMode 为 KeepAspectCentered ，保持长宽比缩放并居中
   - 调整 PanelContainer 的 ThemeOverrides-Styles-Panel 中的 ContentMargins 设置容器与内容的间距
+  - 分别重命名为 AvatarBox 和 Avatar
 - 血条
   - 根节点新建子节点 TextureProgressBar
   - 属性 Textures 下的 Under 可用作背景、 Over 用作边框、 Progress 用作进度条
@@ -371,20 +331,40 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
   - 修改 Range 下的 Value 使其显示
     - 将 MaxValue 设为 1 ，将 Step 设为 0 ，这样 Value 可设置为浮点数，较为丝滑
   - 调整 TextureProgressBar 的 Control 的 Layout-ContainerSizing-Vertical 为【居中收缩】
-  - 编写脚本 `@export var stats: Stats` 用于让外界传入
+  - 将 TextureProgressBar 重命名为 HealthBar
+  - 根节点添加脚本，将 HealthBar 拖入， `@export var stats: Stats` 用于让外界传入
+  - 新建方法 update 修改 HealthBar 的值为实际值
   - 在 Stats 类中增加信号，每次修改时发送信号
   - 在血条脚本中 `_ready()` 方法中对信号进行连接
 - 血条扣血动画
-  - 复制血条设为原来的子节点，命名 EasedHealthBar
-  - 调整 Progress 唯一化并选择另一个素材
+  - 复制血条 HealthBar 设为原来的子节点，命名 EasedHealthBar
+  - 调整 Progress 唯一化（右边箭头下拉）并选择另一个素材
   - 使用画布工具栏靠右的【锚点预设】选择【整个矩形】，这样就能以其父节点进行定位
   - 调整 CancasItem 下的 Visibility-ShowBehindParent 让其在父节点后面绘制
   - 脚本中的血量更新方法中进行补间动画
-    - `create_tween().tween_property(eased_health_bar, "value", percentage, 0.3)`
+    - 直接在 update 方法中 `create_tween().tween_property(eased_health_bar, "value", percentage, 0.3)`
     - 其中 `percentage` 是目标值，即扣血后的血量
+- 能量条
+  - 将血条右键，重设父节点为新节点，选择 VBoxContainer 节点，将子节点垂直排列
+  - 新增能量条，略
+  - 修改 VBoxContainer 的 BoxContainer 下的 Alignment 为 Center 将内容垂直居中
+  - 调整 VBoxContainer 的 Control 下的 ThemeOverrides-Constants-Separation 修改内容间距
 - 角色挂载状态面板
-  - 实例化子场景，在检查器指定刚刚导出的变量 stats 为对应的属性
+  - 在角色场景中，实例化子场景，在检查器指定刚刚导出的变量 stats 为对应的属性
   - 现在面板会跟随玩家角色移动（敌人的血条也可以类似操作）
 - 若想让面板固定在屏幕左上角
   - 选定面板子场景右键【重设父节点为新节点】选择 CanvasLayer
   - 在画布上调整位置即可
+
+## 可交互对象
+
+- 本质还是区域碰撞，和信号触发，相关重复操作略
+- 交互提示使用 AnimatedSprite2D 节点
+  - 在 AnimatedSprite2D 下的 Animation-SpriteFrames 新建 SpriteFrames
+  - 在下方动画帧中，工具栏“从精灵表中添加帧”
+  - 在案例中，调整区域分布为 16*16 恰好一个按钮一个方格
+  - 按照顺序点击对应按钮图标
+  - 工具栏左侧的【动画】中，将自动播放打开即可
+- 在玩家角色脚本中编写对应逻辑 interact 交互动作
+
+## 场景切换
