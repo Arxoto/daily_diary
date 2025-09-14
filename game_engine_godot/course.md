@@ -358,13 +358,240 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
 
 ## 可交互对象
 
-- 本质还是区域碰撞，和信号触发，相关重复操作略
+- 本质还是区域碰撞，和信号触发，类名称 Interactable 继承自 Area2D
+  - 属性 `signal interacted`
+  - 方法 `_init()` 中将 collision_layer 和 collision_mask 先置零
+  - 然后重新设置碰撞层 `set_collision_mask_value(2, true)` ，碰撞层是位变量，玩家碰撞层在2
+  - 方法 `_init()` 中 `body_entered.connect(_on_body_entered)` 和 `body_exited.connect(_on_body_exited)`
+  - 进入离开信号的触发函数对应逻辑为将自身注册/注销至玩家交互列表中
+  - 玩家交互键时触发交互列表的最后一项，调用 Interactable 类的自定义方法 `interact()`
+  - 自定义方法 `interact()` 默认激活信号 `interacted.emit()`
 - 交互提示使用 AnimatedSprite2D 节点
   - 在 AnimatedSprite2D 下的 Animation-SpriteFrames 新建 SpriteFrames
   - 在下方动画帧中，工具栏“从精灵表中添加帧”
   - 在案例中，调整区域分布为 16*16 恰好一个按钮一个方格
   - 按照顺序点击对应按钮图标
   - 工具栏左侧的【动画】中，将自动播放打开即可
-- 在玩家角色脚本中编写对应逻辑 interact 交互动作
 
 ## 场景切换
+
+- 新建场景切换专用传送类 Teleporter 继承自 Interactable
+- 覆盖父类方法 `interact()` 并 `super()` 调用父类方法
+  - 切换场景的逻辑 `get_tree().change_scene_to_file(path)`
+- 导出变量 `@export_file("*.tscn") var path: String`
+- 新建场景，根节点为 Teleporter ，并加入门素材（精灵）、碰撞箱（CollisionShape2D）
+
+此时最简单的场景切换完成，若需指定切换场景后的起始位置，如下操作
+
+- 创建脚本继承自 Marker2D （和 Node2D 类似，但是十字准星较大），类名 EntryPoint
+- 方法 `_ready()` 中 `add_to_group("entry_points")` 加入分组方便查找
+- 传送类 Teleporter 导出变量 `@export var entry_point: String` ，用于指定世界场景中的 EntryPoint 实例名称
+- World 类中添加方法修改玩家角色的位置 `player.global_position = pos` 和 `player.fall_from_y = pos.y`
+  - 为防止角色瞬移导致相机移动 `camera_2d.reset_smoothing()` 和 `camera_2d.force_update_scroll()`
+- 注意 `change_scene_to_file` 方法是有延后的（先从场景树上摘下，延后销毁），因此不能直接在方法后调用，需要做下面调整
+  - （也无法await，因为此时场景已经刷新了，对应的逻辑仍在旧场景内）
+- 因此需要专门切换场景的场景
+  - 添加场景 Game 根节点 Node （非 Node2D 因为是比较通用的类型）
+  - 添加脚本，具体如下
+
+    ```GDScript
+    func change_scene(path: String, entry_point: String) -> void:
+      var tree := get_tree()
+      tree.change_scene_to_file(path)
+      await tree.tree_changed # 等待场景切换信号
+
+      for node in tree.get_nodes_in_group("entry_points"):
+        if node.name == entry_point:
+          tree.current_scene.update_player(node.global_position)
+          break
+    ```
+
+  - 而后项目设置【自动加载】添加 game.tscn （注意右侧全局变量是启用状态）
+  - 修改 Teleporter 类中的 `interact()` 方法 调用刚刚创建的 Game 场景
+    - `Game.change_scene(path, entry_point)`
+  - 若要调整玩家初始朝向
+    - EntryPoint 添加导出变量设置朝向
+    - World 脚本内 `await player.ready` 后修改默认朝向
+      - (教程中是将朝向作为导出变量，变量的 `set(v)` 方法中直接 `if not is_node_ready(): await ready` 的)
+  - 保持玩家状态
+    - 将 State 节点粘贴到 Game 中作为全局变量，然后 Player 中对其的引用修改为 `Game.player_stats`
+    - 将 StatusPanel 中取消导出变量，也同样使用全局变量
+    - 此时刷新场景会有扣血补间动画，在对应的 update 方法中添加默认参数允许跳过补间动画
+
+转场效果，淡入淡出
+
+P.S. 另有一种基于 Shader 的转场，参考 https://www.bilibili.com/video/BV1ka4y1W757/
+
+- Game 场景中添加节点 ColorRect ，上方工具栏调整色块锚点预设为整个屏幕，并调整颜色黑色
+- ColorRect 父节点 CanasLayer 并设置 Layer 为 999
+- Game 脚本中 ready 方法 `color_rect.color.a = 0`
+- Game 脚本中 change_scene 方法
+
+  ```GDScript
+  tree.paused = true # 暂停世界
+
+  var tween := create_tween()
+  tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+  tween.tween_property(color_rect, "color:a", 1, 0.2)
+  await tween.finished
+
+  # change_scene
+  tree.paused = false
+  # new tween "color:a" to 0
+  ```
+
+## 暂存状态
+
+本质是将部分可保存数据保存在全局变量中
+
+- 在 Game 脚本中添加变量 `world_states` 存放场景名称到具体数据之间的映射
+- 获取场景名称 `tree.current_scene.scene_file_path.get_file().get_basename()`
+- 在场景脚本，如 World 中，编写方法 `to_dict()` 和 `from_dict()`
+- 将所有敌人在 `_ready()` 中 `add_to_group("enemies")` 加入到场景树的分组
+- 由于敌人一般是一个独立的场景，也可以在场景的根节点中，右侧检查器旁边“节点”面板的“分组”中添加对应分组名称
+- 在 World 脚本 `to_dict()` 中， `get_tree().get_nodes_in_group("enemies")` 并对其进行遍历，其中每个元素是一个节点 node
+- 在 World 脚本 `to_dict()` 中， `get_path_to(node) as String` 将节点转换为为路径，用于仍然存活的敌人的标识
+- 在 World 脚本 `from_dict()` 中，若敌人不存在则 `node.queue_free()` 从场景树中释放即可
+
+注意，切换场景 `tree.change_scene_to_file(path)` 机制是先从场景树上摘下，延后销毁
+
+在场景树上摘下后但未销毁之间，信号仍然存在，但信号内的执行逻辑可能会失败，需要注意信号“残留”的问题
+
+- 如切换场景时修改玩家血量
+- 若完全跟着视频教程来的话，可能在 `_ready()` 方法中 `stats.health_changed.connect(update_health)`
+- 由于修改血量的同时会 `create_tween()` 创作扣血的补间动画
+  - 依赖场景树，当脱离场景树时返回空，因此会失败
+- 为防止这种问题，需要将信号连接断开
+
+  ```GDScript
+  # in func _ready()
+  tree_exited.connect(func ():
+    stats.health_changed.disconnect(update_health)
+  )
+  ```
+
+## 存档&读档
+
+本质是将上一章节《暂存状态》中的数据进行序列化和反序列化的过程
+
+- 在 Game 脚本中添加变量用作存档文件 `const SAVE_PATH := "user://data.sav"`
+- 实现存档函数 `func save_game()` 将 `world_states` （注意先刷新状态）、当前场景路径、玩家状态、玩家朝向和位置存入字典
+- 存档逻辑如下
+
+  ```GDScript
+  var json := JSON.stringify(data)
+  var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+  if not file:
+    return
+  file.store_string(json)
+  ```
+
+- 读档逻辑如下
+
+  ```GDScript
+  var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+  if not file:
+    return
+  var json := file.get_as_text()
+  var data := JSON.parse_string(json) as Dictionary
+  ```
+
+## 存档点
+
+逻辑上本质就是调用存档方法，这里主要记录存档点的效果制作流程
+
+- 激活状态（已存档）的灯光效果
+  - 场景添加 PointLight2D 节点（本质是一个贴图）
+  - 在 PointLight2D 的 Texture 属性，新建 GradientTexture2D 并展开
+    - 将 Fill 属性修改为 Radial
+    - 打开网格吸附，将黑点放至图片中心，将白点放至任意一边的中点
+    - 展开 Gradient 属性，点击第一行左下角的按钮，进行黑白的颠倒
+    - 如此就完成了模拟灯光的效果
+  - 通过调整 PointLight2D 的 TextureScale 调整灯光范围
+  - 通过调整 PointLight2D-Light2D 的 Color 和 Energy 属性调整灯光颜色和亮度
+- 使用 AnimationPlayer 节点控制存档点的激活/未激活两个动画的播放
+  - 激活时动态效果，调整动画循环播放，并将亮度加入关键帧，并修改差值模式为三次方
+- 注意，若 AnimationPlayer 修改了物理相关（如对可交互碰撞区域进行开关动作）
+  - 需要在 AnimationPlayer-AnimationMixer 下的 CallbackMode-Process 修改为 Physics
+
+P.S. 若想强调灯光效果（环境昏暗），可在场景下添加子节点 CanvasModulate 节点，并将其 Color 属性调暗
+
+这里再补充一个常见的后处理效果（暗角）
+
+- 新建空场景，创建根节点为 CanvasLayer 改名为 Vignette
+- 新建子节点 ColorRect ，锚点预设占据整个屏幕
+- 在 ColorRect-CanvasItem 下的 Meterial 新建 ShaderMaterial
+  - Shader 属性新建着色器
+  - 然后可以自己编写着色器，一般可在 <https://godotshaders.com/> 获取现成的（搜索 Vignette ）
+  - 在编辑器 Shader 下的 ShaderParameters 修改统一变量 uniform 可自定义效果
+- 保存场景在 globals 文件夹下
+- 项目设置中，自动加载添加暗角效果（一般无需代码中引用的话取消全局变量）
+- 调整场景可见性验证效果
+- 调整 Vignette 节点的 CanvasLayer 下的 Layer 将层级调高（一般顺序为 UI -> HUD -> Shader -> 游戏内容）
+
+## 标题界面
+
+本质是 UI 界面
+
+这里先简单介绍锚点系统
+
+- （试用）项目设置-显示-窗口，将拉伸-比例修改为 expand
+  - expand 为等比例缩放，并且宽或长超出部分会自动扩展，而 keep 模式会用黑边遮住
+  - 不同的拉伸模式会影响 UI 布局，使用锚点系统（控件节点）能够确定布局
+- 在控件节点中 Control 下的 Layout-AnchorsPreset 修改为自定义，会显示三组自定义属性
+  - 锚点     AnchorPoints  锚点区域为四个大头针确定的区域，上下左右四个属性为四边在父节点的百分比位置
+  - 锚点偏移 AnchorOffsets 根据锚点区域进行偏移，单位像素，确定控件本身的位置
+  - 伸长方向 GrowDirection 若锚点和偏移的范围仍然比控件本身小，由此推断控件如何扩展
+
+制作标题界面
+
+- 新建空场景，根节点为 用户界面 ，重命名为 TitleScreen ，场景保存至 ui 文件夹
+- 新建子节点 Label ，调整 Text 属性为游戏标题，修改 HorizontalAlignment 为 Center 以居中文字
+- 自定义字体
+  - 单个控件自定义：在 Label-Control 的 ThemeOverrides-Fonts 将字体文件拖入
+  - 跟随父节点主题：在 Label-Control 的 Theme 修改对应主题，最上层为项目设置-GUI-主题-自定义主题
+  - 视频教程中使用得意黑 <https://atelier-anchor.com/typefaces/smiley-sans>
+- 自行添加各种按钮
+  - 若发现无点击效果，打开下方【调试器-其他】，发现点击控件为 Game-ColorRect （后面还有 Vignette 也一样操作）
+  - 调整该节点的 Control 下的 Mouse-Filter 为 ignore
+- 调整按钮的统一主题
+  - 根节点 Control 的 Theme 新建主题，下拉框保存为文件，点击可打开主题编辑器
+  - 拖入字体
+  - 主题编辑器的右侧添加类型 Button
+  - 切换到样式盒选项卡（自己玩一下）
+  - 将聚焦样式（键盘控制下的聚焦效果）添加新建 StyleBoxTexture （其余选择 Empty ）
+  - 将 HUD 素材拖入并选择区域
+    - 若要调整拉伸规则，可关注四条黑白虚线，他们框定的区域控制着如何拉伸（角落不拉伸，边横向纵向拉伸，内部拉伸）
+  - 开始时自动键盘聚焦：在根节点添加脚本，开始时自动将某一个按钮 `any_button.grab_focus()`
+  - 鼠标移动也显示聚焦：对按钮容器进行遍历 `button.mouse_entered.connect(button.grab_focus)`
+  - 按钮功能：在场景树中选中按钮，右侧节点-信号，双击 `pressed()` ，创建连接
+    - 退出游戏使用 `get_tree().quit()`
+
+## 音乐和音效
+
+- 使用节点 AudioStreamPlayer 并将音频文件拖入 Stream 属性
+- 脚本中使用 `audio_player.play()` 进行播放
+- 可使用一个独立的子场景专门管理音效播放
+  - 音效：统一放在 SFX 子节点下
+  - 背景音乐：使用 BGM 名称的音频播放器去承载，并且在编辑器左侧，“场景”页签的右侧“导入”，启用循环并且重新导入
+- 若想世界暂停时，音乐不受影响，可修改 Node 下的 Process-Mode 为 Always （始终进行处理）
+
+音量滑块，音效和音乐独立控制音量
+
+- 下方工作区音频，添加总线，然后多选音效，统一修改属性 Bus 为刚刚新建的总线
+- 代码中使用 AudioServer 类去对总线进行管理
+
+  ```GDScript
+  func get_volume(bus_index: int) -> float:
+    var db := AudioServer.get_bus_volume_db(bus_index)
+    return db_to_linear(db) # 分贝的单位非线性，而音量调整一般为线性
+
+  func set_volume(bus_index: int, v: float) -> void:
+    var db := linear_to_db(v)
+    AudioServer.set_bus_volume_db(bus_index, db)
+  ```
+
+- 编写配置项持久化（使用 ini 文件）
+  - 使用 `ConfigFile.new()` 和 `config.set_value("section", "key", "value")` 进行赋值
+  - 使用 `config.save(path)` 保存配置文件
+  - 使用 `config.load(path)` 加载配置文件（可能失败，但是由于 get 方法有默认值，因此无需担心）
