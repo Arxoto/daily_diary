@@ -32,9 +32,8 @@ workspace
 		"body": [
 			"",
 			"#[cfg(test)]",
-			"mod tests {",
+			"mod unit_tests {",
 			"    use super::*;",
-			"",
 			"    $0",
 			"}",
 			""
@@ -49,8 +48,7 @@ workspace
 			"#[test]",
 			"fn ${1:test_func}() {",
 			"    $0",
-			"}",
-			""
+			"}"
 		],
 		"description": ""
 	},

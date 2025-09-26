@@ -32,11 +32,9 @@ https://ovofast.com/#/dashboard
 > C:\Users\xxx\AppData\Local\Microsoft\Edge\User Data\Default\Extensions
 
 - Proxy SwitchyOmega - AutoProxy: https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt
-- uBlock Origin
+- uBlock Origin / uBlock Origin Lite
 - Tampermonkey
-- Markdown Viewer
-- SuperCopy
-- DeepL translate
+- cat-catch <https://github.com/xifangczy/cat-catch>
 
 ## [scoop]
 

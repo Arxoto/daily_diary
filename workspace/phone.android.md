@@ -33,3 +33,10 @@ Legado https://github.com/gedoor/legado
 
 1. 系统-辅助-文字转语音-选择该引擎
 1. 应用内点击朗读即可
+
+## Termux
+
+### snapdrop
+
+see <https://github.com/Arxoto/snapdrop_runner>
+
