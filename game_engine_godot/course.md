@@ -55,6 +55,9 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
       - 开启后，默认使用 "RESET" 动画来对缺少的轨道动画赋值
       - 特别的，对于循环动画， "RESET" 动画不起作用，原因未知，暂手动赋值处理
         - 参考 https://github.com/timothyqiu/godot-animation-resetter/tree/master 解决，但是使用过程中引擎会有绘图相关代码报错，应该是修改了原生界面导致
+  - 若想自己实现上半身下半身动画分离
+    - 创建两个 Sprite2D 角色，两个 AnimationPlayer 分别挂在其子树下，并分别控制
+    - 现成的方案是使用 AnimationTree 还有 AnimationNodeBlendTree
 - 根节点添加脚本自定义控制逻辑
   - 注意物理引擎相关的逻辑写在 _physics_process 方法中
   - 根据重力下降
@@ -93,7 +96,7 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
 
 注意：
 
-- 若启用相机平滑后，人物移动出现模糊抖动，解决办法有两个
+- 若启用相机平滑后，人物移动出现模糊抖动，解决办法有两个（建议一起打开，物理插值在新版是推荐的）
   - Camera2D 的 ProcessCallback 属性设为 Physics
   - 打开物理插值，但缺点是下面的功能：代码控制相机限制时设定初始位置瞬移会不生效
     - 并且有警告 Camera2D 覆盖了 physics_process 由于使用了物理插值（解决办法是同时使用另一个方法）
@@ -527,7 +530,7 @@ P.S. 若想强调灯光效果（环境昏暗），可在场景下添加子节点
 - 保存场景在 globals 文件夹下
 - 项目设置中，自动加载添加暗角效果（一般无需代码中引用的话取消全局变量）
 - 调整场景可见性验证效果
-- 调整 Vignette 节点的 CanvasLayer 下的 Layer 将层级调高（一般顺序为 UI -> HUD -> Shader -> 游戏内容）
+- 调整 Vignette 节点的 CanvasLayer 下的 Layer 将层级调高（一般顺序为 UI -> HUD -> S   hader -> 游戏内容）
 
 ## 标题界面
 
@@ -595,3 +598,49 @@ P.S. 若想强调灯光效果（环境昏暗），可在场景下添加子节点
   - 使用 `ConfigFile.new()` 和 `config.set_value("section", "key", "value")` 进行赋值
   - 使用 `config.save(path)` 保存配置文件
   - 使用 `config.load(path)` 加载配置文件（可能失败，但是由于 get 方法有默认值，因此无需担心）
+
+## 震屏和顿帧
+
+震动屏幕提升打击感
+- 另外可配合镜头缩放 `zoom` 属性
+
+```GDScript
+# global
+@export var recovery_speed := 16.0
+var strength := 0.0
+
+# in camera process/physics_process
+offset = Vector2(randf_range(-strength, strength), randf_range(-strength, strength))
+strength = move_toward(strength, 0, recovery_speed * delta)
+
+# in camera ready
+# 将震动强度关联至一个全局节点的信号
+```
+
+减缓游戏世界时间模拟卡肉，提升打击感
+
+```GDScript
+Engine.time_scale = 0.01
+await get_tree().create_timer(0.5, true, false, true).timeout
+Engine.time_scale = 1.0
+```
+
+## 导出游戏
+
+### 安装导出模板
+
+左上角：【编辑器】-【管理导出模板】
+
+点击【下载并安装】即可（或者【从文件安装】选择对应tpz文件）
+
+### 导出项目
+
+左上角：【项目】-【导出】
+
+上方【添加】，选择对应平台
+
+（可选）解决下方黄色警告（如想要修改图标则需要设置 rcedit 路径）
+
+下方按钮【导出项目】，注意发布版本取消勾选【使用调试导出】
+
+注意管理产物，保存的路径参考 `./build/windows/xxx.exe`

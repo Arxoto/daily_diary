@@ -55,6 +55,10 @@ see https://k2-fsa.github.io/sherpa/onnx/tts/pretrained_models/vits.html#csukuan
 
 ```
 
+#### TTS服务合集
+
+https://www.cnblogs.com/HGNET/p/18437123
+
 ## Termux
 
 ### snapdrop
