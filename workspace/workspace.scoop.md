@@ -175,11 +175,15 @@ scoop install inkscape gimp krita
 # inkscape 矢量图处理，类似 Illustrator
 # gimp     位图处理，类似 Photoshop ，定位图片合成
 # krita    位图、矢量图、动画都能做，定位绘画创作
-scoop install pixelorama
+# 像素绘画（也可直接使用 krita 绘制）
 # pixelorama 是使用 Godot 制作的免费开源 2D 精灵编辑器
 # libresprite 是 Aseprite 的免费开源分支
 # 视频音频
 scoop install shotcut audacity
+# 音频宿主软件 DAW
+scoop install lmms
+# Ardour 另外一个开源软件 https://ardour.org/ 更偏重于混音和后期
+# Reaper 另外一个商用软件 https://www.reaper.fm/ 小巧专业且售价不高（相比于其他的商业 DAW 来说）
 # 3D建模
 scoop install blender
 # 2D动画
