@@ -233,7 +233,7 @@ shutdown -r -t 0
 ## clear old version and download cache
 
 ```shell
-scoop cleanup # Cleanup apps by removing old versions
+scoop cleanup * # Cleanup apps by removing old versions
 scoop cache show # Show or clear the download cache
 scoop cache rm *
 ```

@@ -1,5 +1,7 @@
 # 厨艺
 
+alse see <https://github.com/Anduin2017/HowToCook>
+
 ## 炒菜
 
 第一先把锅烧热，因为锅里有水，直接放油会蹦出来，所以先热锅最好
