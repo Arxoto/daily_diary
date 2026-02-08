@@ -91,7 +91,7 @@ scoop install openjdk17 # openjdk8-redhat
 
 # game
 # extras/
-sudo scoop install vcredist2005 vcredist2008 vcredist2010 vcredist2012 vcredist2013 vcredist2022
+gsudo scoop install vcredist2005 vcredist2008 vcredist2010 vcredist2012 vcredist2013 vcredist2022
 ```
 
 ## install app
@@ -145,7 +145,7 @@ scoop install icaros-np
 
 # fonts
 # nerd-fonts/
-sudo scoop install -g SarasaGothic-SC UbuntuMono-NF-Propo # 优雅中文字体和中文等宽字体
+scoop install SarasaGothic-SC Maple-Mono-NF-CN UbuntuMono-NF-Propo # 中文等宽字体，个人安装
 ```
 
 常用的软件
@@ -216,7 +216,17 @@ scoop install godot
 # scoop hold gcc mingw rustup-msvc go # dotnet-sdk dotnet-desktop-runtime
 scoop hold vcredist2005 vcredist2008 vcredist2010 vcredist2012 vcredist2013 vcredist2022
 # scoop hold lav-filters-megamix-np madvr
-sudo scoop hold -g SarasaGothic-SC UbuntuMono-NF-Propo
+scoop hold SarasaGothic-SC Maple-Mono-NF-CN UbuntuMono-NF-Propo
+
+# if update
+scoop unhold vcredist2022
+scoop update vcredist2022
+scoop hold vcredist2022
+# restart
+
+scoop unhold SarasaGothic-SC Maple-Mono-NF-CN UbuntuMono-NF-Propo
+scoop update SarasaGothic-SC Maple-Mono-NF-CN UbuntuMono-NF-Propo
+scoop hold SarasaGothic-SC Maple-Mono-NF-CN UbuntuMono-NF-Propo
 ```
 
 ## check and restart

@@ -1,5 +1,8 @@
 {
-    "editor.fontFamily": "'Sarasa Mono SC', 'UbuntuMono Nerd Font Propo', Consolas, 'Courier New', monospace",
+    "editor.fontFamily": "'Sarasa Mono SC', 'Maple Mono NF CN', 'UbuntuMono Nerd Font Propo'",
     "editor.fontLigatures": true, // 使用带连字字体
     "editor.unicodeHighlight.nonBasicASCII": false, // 中文字符不高亮
+    "files.associations": {
+        "**/.vscode/settings.json": "jsonc", // 将 settings.json 识别为 jsonc ，支持注释，虽然识别为 json 好像也能识别注释
+    },
 }
