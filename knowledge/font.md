@@ -120,7 +120,7 @@ CN | —— | …… |
 
 标点符号（《通用规范汉字表》中规定应该是全角的，大部分字体出于编程考虑一般处理成半角）
     双引号 单引号 反引号
-EN | "" | '' | `` |
+EN |  ""  |  ''  |  ``  |
 CN | “” | ‘’ | ·· |
 
 连字
@@ -134,9 +134,12 @@ CN | “” | ‘’ | ·· |
 1. 打开字体文件：字体家族 "Sarasa Mono SC" 默认字体对应 SarasaMonoSC-Regular ；
 1. 找到全角引号的码点(U+201C/U+201D)；
 1. 调整它们的 Advance Width （前进宽度），将其从 500 增加到 1000 ；
+    - 字体家族 "Maple Mono NF CN" 则为 600 到 1200 ；
 1. 重新导出。这样你就得到了一个“标点全角化”的专属更纱黑体。
 
-或者见 [fontforge脚本](../script/font_fix_punctuations/font_fix_punctuations.py)
+或者见 [fontforge脚本](../script/font_fix_punctuations/font_fix_punctuations.py) 
+
+注：脚本仅调整宽度、侧边对齐、修改元数据信息，因此需要使用破折号和省略号本身即为全角的字体为模板生成，否则会有大量的空白
 
 ```shell
 # 注意工作目录要在字体文件下
@@ -147,5 +150,3 @@ fontforge -script font_fix_punctuations.py
 ~/scoop/apps/fontforge/current/bin/ffpython.exe
 # 然后运行脚本（注意路径）
 ```
-
-todo 生成字体文件然后在 vscode 上验证
