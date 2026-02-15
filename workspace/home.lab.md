@@ -112,25 +112,37 @@ P.S. 注意 NAS 共享协议的选择
 ### 在线文档
 
 推荐组合
-- OnlyOffice + FileBrowser Quantum 通用办公套件
-- CryptPad & Excalidraw 临时画布，手动导出
+- SilverBullet/MarkText 常用 MarkDown 编辑
+- Excalidraw 维导图和架构图的画布
+- CryptPad 临时文档编辑
+- OnlyOffice + FileBrowser Quantum 通用办公套件（低频使用）
 
 详细对比
 - OnlyOffice 需配合 FileBrowser Quantum / Nextcloud 丝滑流转
   - 对 Microsoft Office 兼容性最佳，支持多人协作（类似 Google Docs 的实时光标显示），需要在服务端注册账号
-  - 服务端和客户端占用一般，每次打开稍慢（引擎初始化）
-  - 部署时需要进行一定配置
-  - 管理方便， FileBrowser 原始文件存储
+  - 服务端占用极高、客户端占用高
+  - 部署维护复杂度高
+  - 文件透明方便管理， FileBrowser 原始文件存储
 - CryptPad
   - 隐私至上的开源协作办公套件（端到端加密、零知识证明），无需注册账号
-  - 服务端占用极低、客户端占用高（加解密、渲染、协作都在浏览器运行），启动速度快
+  - 服务端占用中高（ Node.js ）、客户端占用极高（加解密、渲染、协作都在浏览器运行），启动速度快
+  - 部署维护复杂度高（若使用反代， ip 访问部署简单）
+  - 文件不透明，超多文件管理时会比较麻烦，但可以导出为 Office 兼容格式在 FileBrowser 中管理
+- SilverBullet
+  - 所见即所得的 WEB 端 MarkDown 编辑器（修改时显示语法符号，纯键盘操作）
+  - 服务端占用极低（ Deno ）、客户端占用中
   - 部署简单
-  - 超多文件管理时会比较麻烦，但可以导出为 Office 兼容格式
+  - 文件透明方便管理，定位是知识库导航，可与 FileBrowser 一起管理（指向一个路径）
+- MarkText （桌面端）
+  - 所见即所得的桌面端 MarkDown 编辑器（修改时隐藏语法符号，有浮动工具栏）
+  - 客户端占用中 （ Electron 桌面应用）
+  - 本地文件管理（或使用 WebDAV ）
 - Excalidraw
   - 思维导图和架构图的画板
-  - 占用较低，无服务端存储、纯前端绘画保存（可保存到 NAS 上），多人协作使用 excalidraw-room
+  - 服务端占用近乎为零（分发静态网页、无服务端存储），纯前端绘画保存（可保存到 NAS 上），多人协作使用 excalidraw-room
   - 部署简单
-  - 手动管理文件，也可在 CryptPad 中集成
+  - 本地文件管理（或使用 WebDAV ），也可在 CryptPad 中集成
+
 
 ### DevOps
 
