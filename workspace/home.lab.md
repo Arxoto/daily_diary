@@ -143,16 +143,25 @@ P.S. 注意 NAS 共享协议的选择
   - 部署简单
   - 本地文件管理（或使用 WebDAV ），也可在 CryptPad 中集成
 
+### 代理网关
 
-### DevOps
+- AdGuard Home 广告过滤、接管内网的 DNS
+  - 自定义规则，将内网设备的域名走自定义逻辑
+  - 将国内域名指向国内 DNS 服务器
+  - 其余域名指向 Sing-box 的 DNS 监听端口
+- Sing-box 流量代理（开启 TUN 模式）
+  - 其 DNS 模块开启 fakeip ，防 SNI 阻断
+- 主路由器配置 DHCP ，首选 DNS 指向 AGH ，网关 Gateway 指向 Sing-box ，做到终端设备使用无感
+  - 若主路由不支持自定义 DHCP ，那么可以关闭主路由的 DHCP ，然后在 AGH 中启用 DHCP 服务器
 
-轻量组合（省内存）：
-- Gitea/Forgejo （代码仓）
-- Gitea Actions （流水线 CI/CD ）
+DNS 链路解析（根据域名找到 IP ）
+1. 终端设备发起 DNS 请求，由于主路由 DHCP 设置，设别的 DNS 自动指向 AGH
+1. AGH 匹配去广告黑名单并选择国内 DNS 或是内网 Sing-box （国内请求极速响应）
+1. Sing-box 的 DNS 模块返回真实 IP （防 DNS 污染）
 
-### 广告隔离
-
-- AdGuard Home
+数据流量链路
+1. 终端设备发起连接，由于主路由 DHCP 设置，设备网关自动指向 Sing-box （兜底，不怕 DNS 走歪）
+1. Sing-box(TUN) 强制拦截所有经过本服务器网卡的流量，选择是否加密代理
 
 ### 智能家居
 
@@ -166,3 +175,8 @@ P.S. 注意 NAS 共享协议的选择
 - Ollama
 - Open WebUI
 
+### DevOps
+
+轻量组合（省内存）：
+- Gitea/Forgejo （代码仓）
+- Gitea Actions （流水线 CI/CD ）
