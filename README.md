@@ -10,6 +10,9 @@ git remote add submodule_alias xxx.git # 定义别名
 git submodule add submodule_alias submodule_folder # 下载代码并注册激活
 git add . && git commit -m "" && git push # 而后需要在主仓库将这次改动提交
 
+# 自动化配置（仅对当前仓库生效，开启后所有支持 --recurse-submodules 命令的）
+git config submodule.recurse true
+
 
 # clone 项目
 git clone xxx.git main_folder --recurse-submodules # 一键克隆主项目及子模块
