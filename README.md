@@ -8,7 +8,7 @@
 # 添加一个新的子模块
 git remote add submodule_alias xxx.git # 定义别名
 git submodule add submodule_alias submodule_folder # 下载代码并注册激活
-git add . && git commit -m "" && git push # 而后需要在主仓库将这次改动提交
+git add . && git commit -m "" && git push # 而后需要在主项目将这次改动提交
 
 # 自动化配置（仅对当前仓库生效，开启后所有支持 --recurse-submodules 命令的）
 git config submodule.recurse true
@@ -46,6 +46,20 @@ git submodule status
 git submodule init # 将根目录下的 .gitmodules 文件中的子模块信息复制到本地仓库的配置中 .git/config （激活子模块）
 git submodule update # 根据本地配置中的 url 以及当前记录中的 commit_id 去更新子模块代码
 
+# 如何将已有代码转换成子模块
+# 清理主项目的索引
+git rm --cached -r submodule_folder # 从索引中移除文件（不删除文件），已被主项目跟踪的文件夹无法转换为子模块
+git commit -m "remove_folder_before_submoduling"
+# 将子模块变为独立仓库
+cd submodule_folder
+git init # 将其变为独立仓库
+git add . && git commit -m "initial_module_commit" # 并合入到子模块的远程仓库
+# 在主项目添加子模块
+cd main_folder
+git submodule add submodule_alias submodule_folder # 注册为子模块
+git submodule absorbgitdirs submodule_folder # 将子模块的 .git 文件夹 转换为 .git 文件，让主项目能跟踪子模块
+git add .gitmodules submodule_folder && git commit -m "add_submodule"
+
 ```
 
 ## subtree
@@ -57,7 +71,7 @@ submodule 仅仅是一个“指针/引用”，相对的 subtree 则是“深拷
 git remote add subtree_alias xxx.git
 
 # 添加一个新的子树
-# squash 将子树的历史提交合并成一个 防止主仓库的历史记录被子树污染（合并提交的描述中包含了原始 commit_id ）
+# squash 将子树的历史提交合并成一个 防止主项目的历史记录被子树污染（合并提交的描述中包含了原始 commit_id ）
 git subtree add --prefix=${subtree_folder} subtree_alias ${branch} --squash
 
 # clone
