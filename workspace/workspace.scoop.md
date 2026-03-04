@@ -69,16 +69,41 @@ develop environment 开发环境和游戏环境
 
 ```shell
 # main/
-scoop install gcc mingw msys2 cmake ninja rustup-msvc python uv go nodejs pnpm
+scoop install gcc mingw msys2 cmake ninja rustup-msvc go uv fnm volta
 # GCC GNU_Compiler_Collection GNU 编译器
 # MinGW Minimalist_GNU_for_Windows GNU 的 Windows 移植版
 # MSYS2 基于 MinGW-w64 的增强工具集，包含包管理器（pacman）
 # Cygwin Unix 环境模拟层（若想直接执行 Linux Shell ，简单场景使用 git-bash 复杂场景使用 WSL2 ）
 # CMake 作为构建前端（生成 Makefile 来执行 Make）
 # Ninja 作为构建后端
+
 # rustup 管理 rust & cargo
-# uv 是一个 python 的包管理工具
-# pnpm 是一个 nodejs 的包管理工具
+# go 自带管理工具（一般也不需要切换）
+# uv 是一个 python 的包管理工具，同时一站式支持：虚拟环境创建、依赖安装
+
+# nodejs 管理复杂：
+# fnm 用于管理 nodejs 版本，兼容 nvm （不要用 scoop 直接管理 nodejs 会有全局包冲突的问题）
+#    P.S.安装后提示执行 `fnm env --use-on-cd | Out-String | Invoke-Expression` 不建议执行，会覆盖 cd 命令，每次 cd 后自动检查项目依赖版本，并修改终端的 PATH 变量
+#        每次手动 `fnm use --silent-if-unchanged` 切换 PATH 中的 nodejs 路径
+# volta 用于管理 nodejs 版本和管理包管理器 (npm/yarn/pnpm) ，但是不兼容 nvm
+#    P.S.相比于 Corepack （官方的包管理器，内置于 nodejs ），不依赖 nodejs 版本
+#    P.S.相比于 fnm 污染基础命令，更优雅基于 shim 实现，执行 node 命令实际执行 ~/.volta/bin/node 里面自动确定版本和路径并执行真正的 node 命令
+#        但是其 shim 实现上存在共享状态的情况（如锁文件防止下载同版本、临时文件进行通信等），极端情况可能会出问题，在快速切换目录时可能因为目录缓存更新不及时导致版本出错
+# 最佳实践
+# - 尽量避免全局安装包；若 volta 支持则用其管理、若不支持则先 `fnm use` 再安装到 fnm 里
+# - 自己项目使用 volta 能完全规避版本问题
+# - 开源项目若基于 nvm/fnm 则使用 `fnm use`
+#   - 此时包管理器仍然是 volta 的
+#   - 若安装包依赖有问题：尝试 npx 临时指定包管理器的版本，对应的版本会下载到全局统一的缓存目录里
+# - 开源项目若基于 Corepack 则使用 `corepack npm/yarn/pnpm install`
+#   - `corepack enable` 会永久改变 PATH 变量，之后包管理器就被 Corepack 的 shim 拦截
+# - 项目使用 Volta ______ package.json 中有 volta 字段
+# - 项目使用 fnm ________ 根目录有 .nvmrc 或 .node-version 文件
+# - 项目使用 Corepack ___ package.json 中有 packageManager 字段
+# - 项目使用 npm ________ 根目录有 package-lock.json 文件
+# - 项目使用 yarn _______ 根目录有 yarn.lock 文件
+# - 项目使用 pnpm _______ 根目录有 pnpm-lock.yaml 文件
+# - 使用 pwsh `(Get-Command node).Source` 确认使用的是 fnm 还是 volta 管理的 nodejs
 
 # java/
 scoop install openjdk17 # openjdk8-redhat
