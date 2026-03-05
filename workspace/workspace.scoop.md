@@ -69,7 +69,7 @@ develop environment 开发环境和游戏环境
 
 ```shell
 # main/
-scoop install gcc mingw msys2 cmake ninja rustup-msvc go uv fnm volta
+scoop install gcc mingw msys2 cmake ninja rustup-msvc go uv fnm
 # GCC GNU_Compiler_Collection GNU 编译器
 # MinGW Minimalist_GNU_for_Windows GNU 的 Windows 移植版
 # MSYS2 基于 MinGW-w64 的增强工具集，包含包管理器（pacman）
@@ -83,41 +83,56 @@ scoop install gcc mingw msys2 cmake ninja rustup-msvc go uv fnm volta
 
 # nodejs 管理复杂：
 # fnm 用于管理 nodejs 版本，兼容 nvm （不要用 scoop 直接管理 nodejs 会有全局包冲突的问题）
-#    P.S.安装后提示执行 `fnm env --use-on-cd | Out-String | Invoke-Expression` 不建议执行，会覆盖 cd 命令，每次 cd 后自动检查项目依赖版本，并修改终端的 PATH 变量
-#        每次手动 `fnm use --silent-if-unchanged` 切换 PATH 中的 nodejs 路径
-# volta 用于管理 nodejs 版本和管理包管理器 (npm/yarn/pnpm) ，但是不兼容 nvm
-#    P.S.相比于 Corepack （官方的包管理器，内置于 nodejs ），不依赖 nodejs 版本
-#    P.S.相比于 fnm 污染基础命令，更优雅基于 shim 实现，执行 node 命令实际执行 ~/.volta/bin/node 里面自动确定版本和路径并执行真正的 node 命令
+#    P.S.安装后提示配置终端打开时自动执行 `fnm env --use-on-cd | Out-String | Invoke-Expression` 不建议实施，会覆盖 cd 命令，每次 cd 后都会尝试切换 nodejs 版本
+#    P.S.每次使用前需要使用 `fnm env` 临时添加环境变量，之后的第一次 `fnm use` 会根据环境变量去生成软连接指向对应的 nodejs 安装目录，再之后的 `fnm use` 仅修改软连接
+# Volta 用于管理 nodejs 版本和管理包管理器 (npm/yarn/pnpm) ，但对 pnpm 支持不佳（不支持全局安装和自动迁移），且不兼容 nvm 
+#    P.S.相比于 Corepack （官方的包管理器，内置于 nodejs ）， Volta 不依赖 nodejs 版本，他们都是基于 shim 实现的
+#        其中 Corepack `corepack enable` 执行后，会在 corepack 同目录下生成 npm/yarn/pnpm 的 shim
+#    P.S.相比于 fnm 污染基础命令， Volta 更优雅基于 shim 代理，执行 node 命令实际执行 ~/.volta/bin/node 一个简单的执行文件，自动确定版本和路径并执行真正的 node 命令
 #        但是其 shim 实现上存在共享状态的情况（如锁文件防止下载同版本、临时文件进行通信等），极端情况可能会出问题，在快速切换目录时可能因为目录缓存更新不及时导致版本出错
+#    P.S.Volta 在 shim 中禁止了 pnpm 的全局安装，因为 pnpm 会直接操作文件系统（软连接等），相反对于 npm/yarn 的全局安装能完全接管，实际安装在 Volta 中
+#    P.S.Volta 说的 pnpm 无法自动迁移，指的是老版本中对 pnpm 只是作为一个普通的 npm 包被 Volta 管理，新版需要设置环境变量并手动重新安装
+#
 # 最佳实践
-# - 尽量避免全局安装包；若 volta 支持则用其管理、若不支持则先 `fnm use` 再安装到 fnm 里
-# - 自己项目使用 volta 能完全规避版本问题
-# - 开源项目若基于 nvm/fnm 则使用 `fnm use`
-#   - 此时包管理器仍然是 volta 的
+# - fnm 会污染 cd 命令， volta 对 pnpm 支持不佳，二者都有缺点，综合考虑使用 fnm 手动切换 nodejs 版本、使用 corepack 自动管理包管理器
+# - 尽量避免全局安装包；若必须则先 `fnm use {version}` 再安装到 fnm 下的 nodejs 里
+# - 每次 fnm 安装新 nodejs 后，执行 `corepack enable` 让其接管包管理器，其 shim 在 fnm 下的 nodejs 中，不会污染外部环境（todo）
+#   - 或提前执行 `fnm env --corepack-enabled | Out-String | Invoke-Expression` ，让 fnm 安装后自动执行 `corepack enable`
+#   - 若 nodejs 版本较老不支持 corepack 则手动管理，若新版非内置 corepack 则全局安装后手动执行 `corepack enable`
+# - 进入项目路径手动执行 `fnm use` 切换对应 nodejs （如果没配置自动执行刷新环境变量则手动刷一下）
 #   - 若安装包依赖有问题：尝试 npx 临时指定包管理器的版本，对应的版本会下载到全局统一的缓存目录里
-# - 开源项目若基于 Corepack 则使用 `corepack npm/yarn/pnpm install`
-#   - `corepack enable` 会永久改变 PATH 变量，之后包管理器就被 Corepack 的 shim 拦截
-# - 项目使用 Volta ______ package.json 中有 volta 字段
-# - 项目使用 fnm ________ 根目录有 .nvmrc 或 .node-version 文件
-# - 项目使用 Corepack ___ package.json 中有 packageManager 字段
-# - 项目使用 npm ________ 根目录有 package-lock.json 文件
-# - 项目使用 yarn _______ 根目录有 yarn.lock 文件
-# - 项目使用 pnpm _______ 根目录有 pnpm-lock.yaml 文件
-# - 使用 pwsh `(Get-Command node).Source` 确认使用的是 fnm 还是 volta 管理的 nodejs
+# - 如何识别项目本身使用的管理器
+#   - 项目使用 Volta ______ package.json 中有 volta 字段
+#   - 项目使用 fnm ________ 根目录有 .nvmrc 或 .node-version 文件
+#   - 项目使用 Corepack ___ package.json 中有 packageManager 字段
+#   - 项目使用 npm ________ 根目录有 package-lock.json 文件
+#   - 项目使用 yarn _______ 根目录有 yarn.lock 文件
+#   - 项目使用 pnpm _______ 根目录有 pnpm-lock.yaml 文件
 
 # java/
 scoop install openjdk17 # openjdk8-redhat
-# versions/
-# scoop install python27
-
-# dotnet
-# scoop install main/dotnet-sdk
-# scoop install dorado/dotnet-desktop-runtime
 
 # game
 # extras/
 gsudo scoop install vcredist2005 vcredist2008 vcredist2010 vcredist2012 vcredist2013 vcredist2022
 ```
+
+uv 镜像配置（环境变量）
+
+```powershell
+$env:UV_PYTHON_INSTALL_MIRROR = "https://mirror.nju.edu.cn/github-release/astral-sh/python-build-standalone/"
+$env:UV_DEFAULT_INDEX = "https://mirrors.ustc.edu.cn/pypi/simple"
+```
+
+fnm 镜像配置（环境变量）
+
+```powershell
+$env:FNM_NODE_DIST_MIRROR = "https://npmmirror.com/mirrors/node/"
+npm config set registry "https://registry.npmmirror.com/"
+yarn config set registry "https://registry.npmmirror.com/"
+pnpm config set registry "https://registry.npmmirror.com/"
+```
+
 
 ## install app
 

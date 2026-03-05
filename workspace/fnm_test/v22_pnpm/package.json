@@ -1,0 +1,5 @@
+{
+  "name": "test_fnm_corepack",
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.30.3+sha1.e73903d314ca7c463712a4e6e3c696d4b0ffa4b0"
+}
