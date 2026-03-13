@@ -32,7 +32,7 @@ workspace
 		"body": [
 			"",
 			"#[cfg(test)]",
-			"mod unit_tests {",
+			"mod tests {",
 			"    use super::*;",
 			"    $0",
 			"}",
