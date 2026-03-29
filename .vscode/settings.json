@@ -5,4 +5,5 @@
     "files.associations": {
         "**/.vscode/settings.json": "jsonc", // 将 settings.json 识别为 jsonc ，支持注释，虽然识别为 json 好像也能识别注释
     },
+    "python.terminal.activateEnvironment": false, // 防止集成终端自动加载虚拟环境
 }

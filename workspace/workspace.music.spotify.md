@@ -4,14 +4,6 @@ https://open.spotify.com/
 
 一开始建议代理选择 HK
 
-## 搭配 Lyricify 显示歌词
-
-https://github.com/WXRIW/Lyricify-App/releases
-
-## 歌单迁移
-
-https://www.tunemymusic.com/zh-CN/home
-
 ## 【音质】配置
 
 - 【串流播放音质】高
@@ -22,3 +14,16 @@ https://www.tunemymusic.com/zh-CN/home
 ## 转区
 
 右上角【账号】【编辑个人档案】【国家或地区】
+
+## 歌单迁移
+
+<https://www.tunemymusic.com/zh-CN/home>
+
+## 搭配 spotube 更换音源（同时支持功能更完善的歌词）
+
+- <https://spotube.krtirtho.dev/>
+- <https://github.com/KRTirtho/spotube>
+
+## 搭配 Lyricify 显示歌词
+
+<https://github.com/WXRIW/Lyricify-App/releases>
