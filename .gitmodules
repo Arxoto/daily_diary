@@ -4,3 +4,6 @@
 [submodule "workspace/mpv-install"]
 	path = workspace/mpv-install
 	url = git@github.com:Arxoto/mpv-install.git
+[submodule "workspace/web_helper"]
+	path = workspace/web_helper
+	url = git@github.com:Arxoto/web_helper.git
