@@ -5,3 +5,4 @@ cat all.csv | sed 1d | awk -F'","' '{ print $1," - ",$2}' | tr -d '"' \
 
 echo 'Landing Guy  -  刘昊霖'
 echo '女儿情  -  吴静'
+echo "七剑战歌(Seven Swords' Victory)  -  川井憲次"
