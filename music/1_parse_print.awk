@@ -1,5 +1,7 @@
 BEGIN {
-    output_split = "__from__"
+    if (!output_split) {
+        output_split = "__from__"
+    }
 }
 
 {
