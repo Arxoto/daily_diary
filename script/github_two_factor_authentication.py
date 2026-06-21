@@ -1,3 +1,13 @@
+# /// script
+# requires-python = ">=3.14"
+# dependencies = [
+#     "pyotp>=2.10.0",
+# ]
+#
+# [[tool.uv.index]]
+# url = "https://mirrors.ustc.edu.cn/pypi/simple"
+# default = true
+# ///
 import os
 import pyotp
 import time
