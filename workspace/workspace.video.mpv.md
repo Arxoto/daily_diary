@@ -51,8 +51,8 @@ RIGHT          seek  5              # 前进 5s
 -              add speed -0.5       # 播放速度 -（最小0.01）
 =              add speed  0.5       # 播放速度 +（最大100）
 BS             set speed  1.0       # 重置播放速度 [退格键]
-[              frame-back-step      # （暂停）帧步退
-]              frame-step           # （暂停）帧步进
+,              frame-back-step      # （暂停）帧步退
+.              frame-step           # （暂停）帧步进
 l              ab-loop              # 设置/清除 A-B循环点
 
 # add audio-delay -0.1         # 音频同步 提前100ms

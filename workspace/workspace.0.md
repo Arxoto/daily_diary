@@ -81,15 +81,20 @@ snipaste.shortcut
 
 ## MPV
 
-config and input see -> workspace.video.mpv.md
+- origin config -> [mpv.md](./workspace.video.mpv.md)
+
+- mpv_PlayKit installer [mpv_PlayKit](https://github.com/hooke007/mpv_PlayKit/releases)
+  - download the mpv-lazy-yyyyMMdd.exe and install
+  - use [mpv-install](https://github.com/rossy/mpv-install) to set default application
+  - set the config -> [mpv.playkit.input.conf](./workspace.video.mpv.playkit.input.conf)
 
 ## K-Lite Codec Pack
 
-mpc-hc64 shortcut see -> workspace.video.k_lite_codec.ini
+mpc-hc64 shortcut see -> [k_lite_codec.ini](./dropped/workspace.video.k_lite_codec.ini)
 
 ## VLC
 
-file-suffix-reg see -> workspace.video.vlc_suffix.reg
+file-suffix-reg see -> [vlc_suffix.reg](./dropped/workspace.video.vlc_suffix.reg)
 
 ## PotPlayer
 
@@ -97,4 +102,4 @@ file-suffix-reg see -> workspace.video.vlc_suffix.reg
 - 全局滤镜强制使用
 - madvr驱动类型选择 digital monitor
 
-PotPlayerMini64.ini shortcut see -> workspace.video.potplayer.ini
+PotPlayerMini64.ini shortcut see -> [potplayer.ini](./dropped/workspace.video.potplayer.ini)
