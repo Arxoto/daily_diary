@@ -7,3 +7,6 @@
 [submodule "workspace/web_helper"]
 	path = workspace/web_helper
 	url = git@github.com:Arxoto/web_helper.git
+[submodule "workspace/mpv_PlayKit"]
+	path = workspace/mpv_PlayKit
+	url = git@github.com:Arxoto/mpv_PlayKit.git
