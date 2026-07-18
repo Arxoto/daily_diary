@@ -52,6 +52,20 @@ workspace
 		],
 		"description": ""
 	},
+	"rust_region": {
+		"scope": "rust",
+		"prefix": "region",
+		"body": [
+			"",
+			"// region: ${1:region_name}",
+			"",
+			"$0",
+			"",
+			"// endregion",
+			""
+		],
+		"description": ""
+	},
 	"python_main": {
 		"scope": "python",
 		"prefix": "main",
