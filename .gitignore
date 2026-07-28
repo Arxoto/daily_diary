@@ -1,6 +1,7 @@
 .venv/
 node_modules/
 
+.claude/
 
 0private_origin/
 0private_workspace/
