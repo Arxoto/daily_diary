@@ -1,7 +1,9 @@
 # run `. .\init-env.ps1` in powershell terminal
 
-. .\.venv\Scripts\Activate.ps1
+. "$PSScriptRoot\.venv\Scripts\Activate.ps1"
 python -V
 
+Push-Location $PSScriptRoot
 fnm env | Out-String | Invoke-Expression
 fnm use
+Pop-Location
