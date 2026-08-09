@@ -4,6 +4,8 @@ from https://www.bilibili.com/video/BV1Z94y1V74m
 
 基于 Godot v4.4 的一个像素风横板动作游戏制作指南
 
+todo 总结 [肖老师的Godot实验室](https://gdbook.kidsgame.top/%E7%AC%AC%E5%85%AB%E7%AB%A0/ch08/)
+
 ## 基础项目、测试场景、简单人物
 
 像素风游戏的常用配置（画面放大三倍）
