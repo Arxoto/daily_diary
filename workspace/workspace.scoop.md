@@ -6,6 +6,14 @@ scoop export > '.\workspace\workspace.scoop.json'
 scoop import '.\workspace\workspace.scoop.json'
 ```
 
+## clear old version and download cache
+
+```shell
+scoop cleanup * # Cleanup apps by removing old versions
+scoop cache show # Show or clear the download cache
+scoop cache rm *
+```
+
 ## choose dir (admin)
 
 可选 修改 scoop 目录【一般来说没必要手动修改安装目录】
@@ -25,18 +33,18 @@ mkdir $env:SCOOP_GLOBAL
 安装 scoop
 
 ```shell
-# (maybe) Set-ExecutionPolicy RemoteSigned -scope CurrentUser
-iwr -useb get.scoop.sh | iex
-# (or) Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+# iwr -useb get.scoop.sh | iex
 ```
 
-配置代理（先自行安装 clash-verge-rev ）
+配置代理
 
 ```shell
 scoop config proxy localhost:7898
 
 # git and 7z
-scoop install git
+scoop install 7zip git
 # set proxy for git
 git config --global http.proxy 'socks5://localhost:7898'
 git config --global https.proxy 'socks5://localhost:7898'
@@ -53,17 +61,17 @@ scoop bucket add nonportable
 scoop bucket add dorado https://github.com/chawyehsu/dorado
 ```
 
-## configuration environment
-
-tools 基础必备的工具（或是被依赖的工具）
+必备工具
 
 ```shell
 scoop checkup
 
 # main/
 scoop install lessmsi innounp dark nssm # dark 即 WiX Toolset 均是解析安装文件、管理服务的工具
-scoop install sudo gsudo curl
+scoop install sudo gsudo
 ```
+
+## configuration environment
 
 develop environment 开发环境和游戏环境
 
@@ -120,12 +128,23 @@ scoop install mingw cmake ninja rustup-msvc go uv fnm # gcc msys2
 #   - 项目使用 yarn _______ 根目录有 yarn.lock 文件
 #   - 项目使用 pnpm _______ 根目录有 pnpm-lock.yaml 文件
 
+# 类 nodejs
+scoop install deno # bun
+# Deno 由 rust 实现，对 nodejs 包兼容性好
+# Bun 由 zig 实现，相比于 Deno 更关注性能
+#   但是有内存泄漏问题，且被 Anthropic 使用 ai 基于 rust 重写，有待观望
+
 # java/
-scoop install openjdk17 # openjdk8-redhat
+scoop install openjdk17 openjdk21 # openjdk8-redhat
+
+# 开发常用工具
+# main/
+scoop install curl openssl ffmpeg
 
 # game
 # extras/
 gsudo scoop install vcredist2005 vcredist2008 vcredist2010 vcredist2012 vcredist2013 vcredist2022
+scoop hold vcredist2005 vcredist2008 vcredist2010 vcredist2012 vcredist2013 vcredist2022
 ```
 
 uv 镜像配置（环境变量）
@@ -144,18 +163,21 @@ yarn config set registry "https://registry.npmmirror.com/"
 pnpm config set registry "https://registry.npmmirror.com/"
 ```
 
-
 ## install app
 
-系统体验增强
-
-or just use 'export/import'
+推荐软件
 
 ```shell
+# start_with_os
+# extras/
+scoop install everything # translucenttb eartrumpet quicklook
+# extras/
+scoop install snipaste # trafficmonitor
 # system clean program
 # extras/
-scoop install dismplusplus driverstoreexplorer geekuninstaller
-scoop install freemove wiztree # spacesniffer
+scoop install dismplusplus driverstoreexplorer
+scoop install bulk-crap-uninstaller hibit-uninstaller # geekuninstaller
+scoop install wizfile wiztree # spacesniffer freemove （不如直接软连接）
 scoop install memreduct hasher
 
 # download
@@ -168,45 +190,47 @@ scoop install qbittorrent-enhanced motrix aria-ng-gui neatdownloadmanager # emul
 # main
 scoop install sing-box mihomo v2ray xray
 # extras/
-scoop install clash-nyanpasu flclash clash-party v2rayn
+scoop install clash-nyanpasu flclash clash-party v2rayn gui-for-singbox
+# gui-for-singbox 8k stars
 # clash-nyanpasu 12k stars
 # clash-party    19k stars
 # flclash        29k stars
 # v2rayn         94k stars
+scoop install spotube
 scoop install telegram # discord use https://discord.com/app
 
 # book picture
 # extras/
-scoop install neeview # sumatrapdf
-scoop install imageglass exifglass
-# imageglass    Star 7K CSharp
-# jpegview-fork Star 2k Cpp
-# qview         Star 2k Cpp
-# picview       Star 1k CSharp 使用体验不是很好 官网说和7z配合能实现压缩包看图 但实际有问题？
+scoop install marktext neeview sumatrapdf
+scoop install imageglass exifglass exiftool
+# imageglass    Star 14K CSharp
+# picview       Star 3.5k CSharp
+# qview         Star 3.5k Cpp 轻量快速
+# jpegview-fork Star 3.0k Cpp 小巧快速
+# nomacs        Star 3.2k Cpp 主要为图片对比，可同步缩放平移
 
 # video
 # main/
-scoop install yt-dlp # ffmpeg youtube-dl
+scoop install yt-dlp youtube-dl
 # extras/
 scoop install youtube-dl-gui mpv # mpv.net k-lite-codec-pack-full-np vlc
+scoop install magpie # 轻量级的窗口超分辨率工具
 # nonportable
 scoop install icaros-np
 # potplayer
 # scoop install potplayer madvr nonportable/lav-filters-megamix-np
 
 # fonts
+# extras/
+scoop install fontforge # 开源字体编辑器
 # nerd-fonts/
 scoop install SarasaGothic-SC Maple-Mono-NF-CN UbuntuMono-NF-Propo # 中文等宽字体，个人安装
+scoop hold SarasaGothic-SC Maple-Mono-NF-CN UbuntuMono-NF-Propo
 ```
 
 常用的软件
 
 ```shell
-# start_with_os
-# extras/
-scoop install everything wizfile # translucenttb eartrumpet quicklook
-# extras/
-scoop install snipaste # trafficmonitor
 
 # extras/
 scoop install screentogif sharex
@@ -234,7 +258,7 @@ scoop install qtscrcpy
 # extras/
 
 # 图像
-scoop install inkscape gimp krita
+scoop install inkscape gimp krita pixelorama
 # inkscape 矢量图处理，类似 Illustrator
 # gimp     位图处理，类似 Photoshop ，定位图片合成
 # krita    位图、矢量图、动画都能做，定位绘画创作
@@ -257,27 +281,7 @@ scoop install blender
 # scoop install opentoonz # enve找不到
 
 # 游戏引擎
-scoop install godot
-```
-
-## hold version
-
-```shell
-# scoop hold nodejs pnpm
-# scoop hold gcc mingw rustup-msvc go # dotnet-sdk dotnet-desktop-runtime
-scoop hold vcredist2005 vcredist2008 vcredist2010 vcredist2012 vcredist2013 vcredist2022
-# scoop hold lav-filters-megamix-np madvr
-scoop hold SarasaGothic-SC Maple-Mono-NF-CN UbuntuMono-NF-Propo
-
-# if update
-scoop unhold vcredist2022
-scoop update vcredist2022
-scoop hold vcredist2022
-# restart
-
-scoop unhold SarasaGothic-SC Maple-Mono-NF-CN UbuntuMono-NF-Propo
-scoop update SarasaGothic-SC Maple-Mono-NF-CN UbuntuMono-NF-Propo
-scoop hold SarasaGothic-SC Maple-Mono-NF-CN UbuntuMono-NF-Propo
+scoop install godot gdsdecomp
 ```
 
 ## check and restart
@@ -289,12 +293,4 @@ scoop status  # Show status and check for new app versions
 
 ```shell
 shutdown -r -t 0
-```
-
-## clear old version and download cache
-
-```shell
-scoop cleanup * # Cleanup apps by removing old versions
-scoop cache show # Show or clear the download cache
-scoop cache rm *
 ```
