@@ -44,26 +44,24 @@ SPACE          cycle pause          # 切换 暂停/播放状态 [空格键]
 ENTER          cycle fullscreen     # 切换 全屏状态 [回车键]
 ESC            set fullscreen no    # 退出 全屏状态 [ESC]
 
-UP             add volume  2        # 音量 +
-DOWN           add volume -2        # 音量 -
-LEFT           seek -5              # 后退 5s
-RIGHT          seek  5              # 前进 5s
+LEFT           seek -2              # 后退 2s
+RIGHT          seek  2              # 前进 2s
+DOWN           add volume -1        # 音量 -
+UP             add volume  1        # 音量 +
 -              add speed -0.5       # 播放速度 -（最小0.01）
 =              add speed  0.5       # 播放速度 +（最大100）
-BS             set speed  1.0       # 重置播放速度 [退格键]
 ,              frame-back-step      # （暂停）帧步退
 .              frame-step           # （暂停）帧步进
 l              ab-loop              # 设置/清除 A-B循环点
 
-# add audio-delay -0.1         # 音频同步 提前100ms
-# add audio-delay  0.1         # 音频同步 滞后100ms
-# set audio-delay  0           # 重置音频同步
-# add sub-delay   -0.1         # 字幕同步 提前100ms
-# add sub-delay    0.1         # 字幕同步 滞后100ms
-# set sub-delay    0           # 重置字幕同步
+# a       add audio-delay -0.1                   # 音频同步 提前100ms
+# d       add audio-delay  0.1                   # 音频同步 滞后100ms
+# w       add sub-delay   -0.1                   # 字幕同步 提前100ms
+# s       add sub-delay    0.1                   # 字幕同步 滞后100ms
+# r       set audio-delay 0 ; set sub-delay 0    # 重置音频字幕同步
 
-ctrl+h    cycle-values hwdec "no" "auto-safe"  # 切换硬解
-`         script-binding console/enable        # 打开控制台 ESC退出
+# ctrl+h    cycle-values hwdec "no" "auto-safe"  # 切换硬解
+`         script-binding console/enable          # 打开控制台 ESC退出
 i         script-binding stats/display-stats
 I         script-binding stats/display-stats-toggle
 ```
