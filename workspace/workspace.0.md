@@ -68,6 +68,7 @@ PowerShell Admin
 - git config --global http.proxy socks5://localhost:{port}
 - git config --global https.proxy socks5://localhost:{port}
 - telegram
+- vscode `Http: Proxy`
 
 ## [setting]
 

@@ -69,13 +69,23 @@ develop environment 开发环境和游戏环境
 
 ```shell
 # main/
-scoop install gcc mingw msys2 cmake ninja rustup-msvc go uv fnm
-# GCC GNU_Compiler_Collection GNU 编译器
-# MinGW Minimalist_GNU_for_Windows GNU 的 Windows 移植版
-# MSYS2 基于 MinGW-w64 的增强工具集，包含包管理器（pacman）
-# Cygwin Unix 环境模拟层（若想直接执行 Linux Shell ，简单场景使用 git-bash 复杂场景使用 WSL2 ）
-# CMake 作为构建前端（生成 Makefile 来执行 Make）
-# Ninja 作为构建后端
+scoop install mingw cmake ninja rustup-msvc go uv fnm # gcc msys2
+# GCC(GNU_Compiler_Collection) GNU 编译器本体
+# MinGW(Minimalist_GNU_for_Windows) 包含 GCC 并附带完整工具链
+# MSYS2 给 Windows 提供 Linux 风格的开发工具，以编译出原生 Windows 软件
+#   包含以下三个组件
+#     MSYS2 子系统，是一个 Cygwin 运行时的分支版本，兼容性更好
+#     MinGW-w64 工具链，调用 Windows API 编译出二进制文件
+#     pacman 包管理器（移植自 Arch Linux ），统一管理子系统的库和工具
+#   环境
+#     MSYS 工具链 MSYS 自带的 GCC ，编译产物非原生 Windows 软件，主要为底层实现
+#     MINGW64 工具链 MinGW-w64 ，运行时库 msvcrt.dll ，是曾经的主流
+#     UCRT64 工具链 MinGW-w64 ，运行时库 ucrtbase.dll ，官方现在首推的默认环境
+#     CLANG64 工具链 LLVM/Clang ，运行时库 ucrtbase.dll ，主要提供另一种编译器选择
+# Cygwin 是 POSIX 兼容层实现，主要用于运行 Unix 应用，但是简单场景 git-bash ，复杂场景不如直接 WSL2 （原生性能）
+# CMake 作为构建前端，为编译工具生成对应的构建脚本（生成 Makefile 来执行 Make ）
+# Ninja 作为构建后端，是构建执行器，相比于 Make 性能更好
+# 手写 CMakeLists.txt -> cmake 生成 Makefile/build.ninja -> make/ninja 编译（命令行调用 MinGW 编译工具）
 
 # rustup 管理 rust & cargo
 # go 自带管理工具（一般也不需要切换）
@@ -83,24 +93,25 @@ scoop install gcc mingw msys2 cmake ninja rustup-msvc go uv fnm
 
 # nodejs 管理复杂：
 # fnm 用于管理 nodejs 版本，兼容 nvm （不要用 scoop 直接管理 nodejs 会有全局包冲突的问题）
-#    P.S.安装后提示配置终端打开时自动执行 `fnm env --use-on-cd | Out-String | Invoke-Expression` 不建议实施，会覆盖 cd 命令，每次 cd 后都会尝试切换 nodejs 版本
-#    P.S.每次使用前需要使用 `fnm env` 临时添加环境变量，之后的第一次 `fnm use` 会根据环境变量去生成软连接指向对应的 nodejs 安装目录，再之后的 `fnm use` 仅修改软连接
-# Volta 用于管理 nodejs 版本和管理包管理器 (npm/yarn/pnpm) ，但对 pnpm 支持不佳（不支持全局安装和自动迁移），且不兼容 nvm 
-#    P.S.相比于 Corepack （官方的包管理器，内置于 nodejs ）， Volta 不依赖 nodejs 版本，他们都是基于 shim 实现的
-#        其中 Corepack `corepack enable` 执行后，会在 corepack 同目录下生成 npm/yarn/pnpm 的 shim
-#    P.S.相比于 fnm 污染基础命令， Volta 更优雅基于 shim 代理，执行 node 命令实际执行 ~/.volta/bin/node 一个简单的执行文件，自动确定版本和路径并执行真正的 node 命令
-#        但是其 shim 实现上存在共享状态的情况（如锁文件防止下载同版本、临时文件进行通信等），极端情况可能会出问题，在快速切换目录时可能因为目录缓存更新不及时导致版本出错
+#    原理是在终端会话的 `PATH` 变量前插入一个临时目录，切换 nodejs 版本时在临时目录里创建软连接
+#    P.S.安装后提示执行 `fnm env --use-on-cd | Out-String | Invoke-Expression` 以每次 `cd` 自动执行 `fnm use` ，这里不建议实施，会污染 cd 命令
+#    P.S.因此建议手动 `fnm env | Out-String | Invoke-Expression; fnm use`
+# Volta 用于管理 nodejs 版本和管理包管理器 (npm/yarn/pnpm) ，但对 pnpm 支持不佳（不支持全局安装和自动迁移），且不兼容 nvm
+#    原理是基于 shim 代理，执行 node 命令实际执行 ~/.volta/bin/node 一个代理执行文件，里面自动确定版本和路径并执行真正的 node 命令
+#    P.S.相比于 fnm 的污染基础命令， Volta 更优雅，但是历史出现过快速切换目录时版本切换出错的情况
 #    P.S.Volta 在 shim 中禁止了 pnpm 的全局安装，因为 pnpm 会直接操作文件系统（软连接等），相反对于 npm/yarn 的全局安装能完全接管，实际安装在 Volta 中
-#    P.S.Volta 说的 pnpm 无法自动迁移，指的是老版本中对 pnpm 只是作为一个普通的 npm 包被 Volta 管理，新版需要设置环境变量并手动重新安装
+# Corepack 是“包管理器的版本管理器”，曾经随着 nodejs 一同分发（但是 pnpm 官方明确表示 v12 版本不兼容 Corepack ）
+#    原理也是基于 shim 垫片，去自动执行对应版本的 npm/yarn 命令
 #
 # 最佳实践
-# - fnm 会污染 cd 命令， volta 对 pnpm 支持不佳，二者都有缺点，综合考虑使用 fnm 手动切换 nodejs 版本、使用 corepack 自动管理包管理器
-# - 尽量避免全局安装包；若必须则先 `fnm use {version}` 再安装到 fnm 下的 nodejs 里
-# - 每次 fnm 安装新 nodejs 后，执行 `corepack enable` 让其接管包管理器，其 shim 在 fnm 下的 nodejs 中，不会污染外部环境（todo）
-#   - 或提前执行 `fnm env --corepack-enabled | Out-String | Invoke-Expression` ，让 fnm 安装后自动执行 `corepack enable`
-#   - 若 nodejs 版本较老不支持 corepack 则手动管理，若新版非内置 corepack 则全局安装后手动执行 `corepack enable`
-# - 进入项目路径手动执行 `fnm use` 切换对应 nodejs （如果没配置自动执行刷新环境变量则手动刷一下）
-#   - 若安装包依赖有问题：尝试 npx 临时指定包管理器的版本，对应的版本会下载到全局统一的缓存目录里
+# - 使用 fnm 管理 nodejs
+#   - 进入项目路径手动执行 `fnm env | Out-String | Invoke-Expression; fnm use` 切换对应 nodejs
+# - 使用原生安装的 pnpm 管理包依赖
+#   - 若想使用 yarn ，官方仍然建议通过 Corepack 管理
+#   - 先 fnm 切换到对应 nodejs 版本，然后执行 `corepack enable yarn` 生成 yarn 的垫片
+# - 尽量避免全局安装包；若必须全局安装，则参考如下：
+#   - 长期使用的工具安装用 `pnpm add -g <pkg>` ，不要用 npm/yarn 进行全局安装
+#   - 临时工具或项目工具用 `npx <pkg>`
 # - 如何识别项目本身使用的管理器
 #   - 项目使用 Volta ______ package.json 中有 volta 字段
 #   - 项目使用 fnm ________ 根目录有 .nvmrc 或 .node-version 文件
