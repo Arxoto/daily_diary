@@ -12,6 +12,76 @@
 workspace
 ```json
 {
+	"js_region": {
+		"scope": "javascript,typescript,javascriptreact,typescriptreact",
+		"prefix": "region",
+		"body": [
+			"",
+			"// #region ${1:region_name}",
+			"",
+			"$0",
+			"",
+			"// #endregion",
+			""
+		],
+		"description": "注释折叠，注意开启 editor.foldingStrategy"
+	},
+	"rust_region": {
+		"scope": "rust",
+		"prefix": "region",
+		"body": [
+			"",
+			"// region: ${1:region_name}",
+			"",
+			"$0",
+			"",
+			"// endregion",
+			""
+		],
+		"description": ""
+	},
+	"c_region": {
+		"scope": "c,cpp",
+		"prefix": "region",
+		"body": [
+			"",
+			"#pragma region ${1:region_name}",
+			"",
+			"$0",
+			"",
+			"#pragma endregion",
+			""
+		],
+		"description": "注意：存在编译器兼容性问题，仅 MSVC 可用"
+	},
+	"py_region": {
+		"scope": "python",
+		"prefix": "region",
+		"body": [
+			"",
+			"# region ${1:region_name}",
+			"",
+			"$0",
+			"",
+			"# endregion",
+			""
+		],
+		"description": ""
+	},
+	"cs_region": {
+		"scope": "csharp",
+		"prefix": "region",
+		"body": [
+			"",
+			"#region ${1:region_name}",
+			"",
+			"$0",
+			"",
+			"#endregion",
+			""
+		],
+		"description": ""
+	},
 	"c_include_once": {
 		"scope": "c,cpp",
 		"prefix": "include_once",
@@ -49,20 +119,6 @@ workspace
 			"fn ${1:test_func}() {",
 			"    $0",
 			"}"
-		],
-		"description": ""
-	},
-	"rust_region": {
-		"scope": "rust",
-		"prefix": "region",
-		"body": [
-			"",
-			"// region: ${1:region_name}",
-			"",
-			"$0",
-			"",
-			"// endregion",
-			""
 		],
 		"description": ""
 	},
