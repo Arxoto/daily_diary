@@ -35,35 +35,41 @@ screenshot-directory="~~desktop/"       # 截图输出在桌面
 新建 ./portable_config/input.conf 确保文本编码为 UTF-8
 
 ```conf
-MBTN_LEFT      ignore               # <无操作> [左键-单击]
-MBTN_LEFT_DBL  cycle fullscreen     # 切换 全屏状态 [左键-双击]
-MBTN_RIGHT     cycle pause          # 切换 暂停/播放状态 [右键-单击]
-WHEEL_UP       add volume  2        # 音量 +
-WHEEL_DOWN     add volume -2        # 音量 -
-SPACE          cycle pause          # 切换 暂停/播放状态 [空格键]
-ENTER          cycle fullscreen     # 切换 全屏状态 [回车键]
-ESC            set fullscreen no    # 退出 全屏状态 [ESC]
-
-LEFT           seek -2              # 后退 2s
-RIGHT          seek  2              # 前进 2s
-DOWN           add volume -1        # 音量 -
-UP             add volume  1        # 音量 +
+Shift+LEFT     seek -1 exact        # 后退 1s （精准）
+Shift+RIGHT    seek  1 exact        # 前进 1s （精准）
+LEFT           seek -5              # 后退 5s （关键帧优先）
+RIGHT          seek  5              # 前进 5s （关键帧优先）
+DOWN           add volume -2        # 音量 -
+UP             add volume  2        # 音量 +
 -              add speed -0.5       # 播放速度 -（最小0.01）
 =              add speed  0.5       # 播放速度 +（最大100）
+
 ,              frame-back-step      # （暂停）帧步退
 .              frame-step           # （暂停）帧步进
 l              ab-loop              # 设置/清除 A-B循环点
 
-# a       add audio-delay -0.1                   # 音频同步 提前100ms
-# d       add audio-delay  0.1                   # 音频同步 滞后100ms
-# w       add sub-delay   -0.1                   # 字幕同步 提前100ms
-# s       add sub-delay    0.1                   # 字幕同步 滞后100ms
-# r       set audio-delay 0 ; set sub-delay 0    # 重置音频字幕同步
+a       add audio-delay -0.1                   # 音频同步 提前100ms
+d       add audio-delay  0.1                   # 音频同步 滞后100ms
+w       add sub-delay   -0.1                   # 字幕同步 提前100ms
+s       add sub-delay    0.1                   # 字幕同步 滞后100ms
+r       set audio-delay 0 ; set sub-delay 0    # 重置音频字幕同步
 
 # ctrl+h    cycle-values hwdec "no" "auto-safe"  # 切换硬解
-`         script-binding console/enable          # 打开控制台 ESC退出
 i         script-binding stats/display-stats
 I         script-binding stats/display-stats-toggle
+`         script-binding console/enable          # 打开控制台 ESC退出
+o         context-menu                           # 打开菜单
+
+MBTN_LEFT      ignore               # <无操作> [左键-单击]
+MBTN_LEFT_DBL  cycle fullscreen     # 切换 全屏状态 [左键-双击]
+MBTN_RIGHT     cycle pause          # 切换 暂停/播放状态 [右键-单击]
+
+WHEEL_UP       add volume  2        # 音量 +
+WHEEL_DOWN     add volume -2        # 音量 -
+
+SPACE          cycle pause          # 切换 暂停/播放状态 [空格键]
+ENTER          cycle fullscreen     # 切换 全屏状态 [回车键]
+ESC            set fullscreen no    # 退出 全屏状态 [ESC]
 ```
 
 ## 内置脚本
