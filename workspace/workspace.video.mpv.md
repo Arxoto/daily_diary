@@ -60,6 +60,8 @@ I         script-binding stats/display-stats-toggle
 `         script-binding console/enable          # 打开控制台 ESC退出
 o         context-menu                           # 打开菜单
 
+q         quit                                   # 退出mpv
+
 MBTN_LEFT      ignore               # <无操作> [左键-单击]
 MBTN_LEFT_DBL  cycle fullscreen     # 切换 全屏状态 [左键-双击]
 MBTN_RIGHT     cycle pause          # 切换 暂停/播放状态 [右键-单击]
