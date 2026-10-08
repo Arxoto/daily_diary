@@ -184,7 +184,7 @@ scoop install memreduct hasher
 # main/
 scoop install n-m3u8dl-cli
 # extras/
-scoop install qbittorrent-enhanced motrix aria-ng-gui neatdownloadmanager # emule
+scoop install qbittorrent-enhanced rayburst aria-ng-gui neatdownloadmanager # emule （ motrix 已停止更新，新版 motrix-next 改名 rayburst ）
 
 # proxy
 # main
