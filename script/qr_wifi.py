@@ -1,63 +1,70 @@
 #!/usr/bin/env python
-# -*- coding:utf-8 -*-
 
-from enum import Enum
+# /// script
+# requires-python = ">=3.14"
+# dependencies = [
+#     "qrcode[pil]>=8.2",
+# ]
+#
+# [[tool.uv.index]]
+# url = "https://mirrors.ustc.edu.cn/pypi/simple"
+# default = true
+# ///
+
 import os
+from enum import StrEnum
+
+import qrcode
 
 
-def showQrImg(ss: str):
-    """
-    pip install qrcode
-    pip install pillow
-    or just
-    pip install "qrcode[pil]"
-    """
-    # import qrcode
-
-    # im = qrcode.make(ss)
-    # im.show()  # need pillow
-
-    from qrcode.main import QRCode
-
-    qr = QRCode()
+def print_qr(ss: str):
+    qr = qrcode.QRCode()
     qr.add_data(ss)
     qr.print_ascii(invert=True)
 
 
 class Wifi:
+    class SecurityType(StrEnum):
+        """
+        加密类型
+        """
 
-    class SECURITY_TYPE(str, Enum):
         WPA = "WPA"
         WEP = "WEP"
         NOT = "nopass"
 
-    class SS_ID_VISIBLE(str, Enum):
-        HIDE = "H:true"
-        SHOW = "H:false"
-
     def __init__(
         self,
-        name: str,
+        ssid_name: str,
         password: str,
-        security_type=SECURITY_TYPE.WPA,
-        hide_SSID=True,
+        security_type=SecurityType.WPA,
+        hidden: bool | None = None,
     ):
-        self.SSID = name
+        self.ssid_name = ssid_name
         self.password = password
         self.security_type = security_type
-        self.hide_SSID = hide_SSID
+        self.hidden = hidden
 
     def __str__(self) -> str:
-        return "WIFI:T:{};S:{};P:{};{};".format(
-            self.security_type,
-            self.special_characters_format(self.SSID),
-            self.special_characters_format(self.password),
-            self.SS_ID_VISIBLE.HIDE if self.hide_SSID else self.SS_ID_VISIBLE.SHOW,
-        )
+        ssid = self.special_characters_format(self.ssid_name)
+        pwd = self.special_characters_format(self.password)
+        wifi_desc = f"WIFI:T:{self.security_type};S:{ssid};P:{pwd};"
+
+        if self.hidden is not None:
+            hidden_value = "true" if self.hidden else "false"
+            wifi_desc += f"H:{hidden_value};"
+
+        return wifi_desc
 
     @staticmethod
     def special_characters_format(string: str):
-        return string.replace(":", "\\:").replace(";", "\\;").replace("\\", "\\\\")
+        return (
+            string.replace("\\", "\\\\")
+            .replace(":", "\\:")
+            .replace(";", "\\;")
+            .replace(",", "\\,")
+            .replace('"', '\\"')
+        )
 
 
 if __name__ == "__main__":
@@ -70,9 +77,8 @@ if __name__ == "__main__":
     with open(file_path, "r", encoding="utf-8") as f:
         while True:
             line = f.readline()
-            if not line:
-                if not wifi_name or not wifi_pwd:
-                    raise Exception("error reading wifi")
+            if not line and (not wifi_name or not wifi_pwd):
+                raise Exception("error reading wifi")  # noqa: TRY002
             if line.startswith("#") or line.isspace():
                 continue
             content = line.strip()
@@ -88,6 +94,6 @@ if __name__ == "__main__":
     print("name", wifi_name, "pwd", wifi_pwd)
     # print(wifi)
 
-    showQrImg(str(wifi))
-    # 获取wifi名称：netsh wlan show profile
-    # 获取wifi配置文件：netsh wlan export profile folder=C:\ key=clear
+    print_qr(str(wifi))
+    # 获取wifi名称： netsh wlan show profiles
+    # 获取wifi配置： netsh wlan show profile key=clear name="你的WiFi名称"
