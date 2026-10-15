@@ -9,8 +9,9 @@
 # default = true
 # ///
 import os
-import pyotp
 import time
+
+import pyotp
 
 
 def test():
@@ -41,7 +42,7 @@ def main():
     current_dir = os.path.dirname(__file__)
     key_path = os.path.join(current_dir, "../0private_origin/0_github_2FA_key")
     if not os.path.isfile(key_path):
-        raise Exception("has no github_2FA_key")
+        raise Exception("has no github_2FA_key")  # noqa: TRY002
 
     with open(key_path, "r", encoding="utf-8") as f:
         secret_key = f.read()
