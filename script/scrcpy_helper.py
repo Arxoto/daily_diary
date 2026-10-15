@@ -10,8 +10,14 @@
 import random
 import string
 import sys
+import threading
+from collections.abc import Callable
 
 import qrcode
+from zeroconf import ServiceBrowser, ServiceListener, Zeroconf
+
+PAIRING_TYPE = "_adb-tls-pairing._tcp.local."
+CONNECT_TYPE = "_adb-tls-connect._tcp.local."
 
 
 def print_qr(ss: str):
@@ -29,12 +35,86 @@ def generate_pair_info() -> tuple[str, str, str]:
     # 生成随机配对密码
     pairing_password = "".join(random.choices(string.digits, k=6))
 
-    qr_string = f"WIFI:T:ADB;S:{service_name};P:{pairing_password};;"
-    return qr_string, service_name, pairing_password
+    qr_payload = f"WIFI:T:ADB;S:{service_name};P:{pairing_password};;"
+    return qr_payload, service_name, pairing_password
+
+
+class PairingListener(ServiceListener):
+    def __init__(self, on_found: Callable[[str], None]):
+        self._on_found = on_found
+
+    def add_service(self, zc, type_, name):
+        info = zc.get_service_info(type_, name)
+        if not info or not info.parsed_addresses():
+            return
+        host = info.parsed_addresses()[0]
+        target = f"{host}:{info.port}"
+        self._on_found(target)
+
+    def update_service(self, zc, type_, name):
+        self.add_service(zc, type_, name)
+
+    def remove_service(self, zc, type_, name):
+        pass
 
 
 def do_qr_pair_connect():
-    pass
+    [qr_payload, _adb_service_name, adb_pair_pwd] = generate_pair_info()
+
+    # 结果接收
+    def new_found_target() -> tuple[
+        threading.Event, Callable[[str], None], Callable[[], str]
+    ]:
+        found = threading.Event()
+        target_holder = ""
+
+        def on_found(target: str):
+            if found.is_set():
+                return
+            nonlocal target_holder
+            target_holder = target
+            found.set()
+
+        def get_target() -> str:
+            return target_holder
+
+        return (found, on_found, get_target)
+
+    def new_browser(
+        type_: str,
+    ) -> tuple[threading.Event, Callable[[], str], Zeroconf, ServiceBrowser]:
+        (found, on_found, get_target) = new_found_target()
+        zc = Zeroconf()
+        listener = PairingListener(on_found)
+        browser = ServiceBrowser(zc, type_, listener)
+        return (found, get_target, zc, browser)
+
+    # 启动 mDNS 监听
+    (pairing_found, pairing_get, pairing_zc, _pairing_browser) = new_browser(
+        PAIRING_TYPE
+    )
+    (connect_found, connect_get, connect_zc, _connect_browser) = new_browser(
+        CONNECT_TYPE
+    )
+
+    # 打印二维码
+    print_qr(qr_payload)
+
+    try:
+        while not pairing_found.wait(timeout=0.5):
+            pass
+        print("执行以下命令完成配对：")
+        print(f"    adb pair {pairing_get()} {adb_pair_pwd}")
+        while not connect_found.wait(timeout=0.5):
+            pass
+        print("执行以下命令完成连接：")
+        print(f"    adb connect {connect_get()}")
+    except KeyboardInterrupt:
+        print("[!] 已取消")
+
+    finally:
+        pairing_zc.close()
+        connect_zc.close()
 
 
 def print_title(title: str):
