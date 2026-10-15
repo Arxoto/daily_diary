@@ -48,11 +48,14 @@ class Wifi:
     def __str__(self) -> str:
         ssid = self.special_characters_format(self.ssid_name)
         pwd = self.special_characters_format(self.password)
-        wifi_desc = f"WIFI:T:{self.security_type};S:{ssid};P:{pwd};"
 
-        if self.hidden is not None:
+        if self.hidden is None:
+            hidden_field = ""
+        else:
             hidden_value = "true" if self.hidden else "false"
-            wifi_desc += f"H:{hidden_value};"
+            hidden_field = f"H:{hidden_value}"
+
+        wifi_desc = f"WIFI:T:{self.security_type};S:{ssid};P:{pwd};{hidden_field};"
 
         return wifi_desc
 
@@ -92,7 +95,7 @@ if __name__ == "__main__":
     # 支付宝扫码连接WIFI
     wifi = Wifi(wifi_name, wifi_pwd)
     print("name", wifi_name, "pwd", wifi_pwd)
-    # print(wifi)
+    print(wifi)
 
     print_qr(str(wifi))
     # 获取wifi名称： netsh wlan show profiles
