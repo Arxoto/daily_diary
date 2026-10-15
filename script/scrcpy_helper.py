@@ -81,23 +81,23 @@ def do_qr_pair_connect():
         return (found, on_found, get_target)
 
     def new_browser(
+        zc: Zeroconf,
         type_: str,
-    ) -> tuple[threading.Event, Callable[[], str], Zeroconf, ServiceBrowser]:
+    ) -> tuple[threading.Event, Callable[[], str], ServiceBrowser]:
         (found, on_found, get_target) = new_found_target()
-        zc = Zeroconf()
         listener = PairingListener(on_found)
         browser = ServiceBrowser(zc, type_, listener)
-        return (found, get_target, zc, browser)
+        return (found, get_target, browser)
 
     # 启动 mDNS 监听
-    (pairing_found, pairing_get, pairing_zc, _pairing_browser) = new_browser(
-        PAIRING_TYPE
-    )
-    (connect_found, connect_get, connect_zc, _connect_browser) = new_browser(
-        CONNECT_TYPE
-    )
+    zc = Zeroconf()
+    (pairing_found, pairing_get, _pairing_browser) = new_browser(zc, PAIRING_TYPE)
+    (connect_found, connect_get, _connect_browser) = new_browser(zc, CONNECT_TYPE)
 
     # 打印二维码
+    print(
+        "手机：【设置】-【系统】-【开发者选项】-开启并进入【无线调试】-点击【使用二维码配对设备】并扫描"
+    )
     print_qr(qr_payload)
 
     try:
@@ -105,16 +105,20 @@ def do_qr_pair_connect():
             pass
         print("执行以下命令完成配对：")
         print(f"    adb pair {pairing_get()} {adb_pair_pwd}")
+        print("执行以下命令确认连接状态：")
+        print("    adb devices")
+
         while not connect_found.wait(timeout=0.5):
             pass
-        print("执行以下命令完成连接：")
+        print("执行以下命令完成连接（若配对完后没有自动连接）：")
         print(f"    adb connect {connect_get()}")
+        print("执行以下命令启动 scrcpy")
+        print("    scrcpy")
     except KeyboardInterrupt:
         print("[!] 已取消")
 
     finally:
-        pairing_zc.close()
-        connect_zc.close()
+        zc.close()
 
 
 def print_title(title: str):
