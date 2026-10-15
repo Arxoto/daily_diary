@@ -3,11 +3,13 @@
 # requires-python = ">=3.8"
 # dependencies = [
 #     "qrcode[pil]",
+#     "zeroconf>=0.136.2",
 # ]
 # ///
 
 import random
 import string
+import sys
 
 import qrcode
 
@@ -31,7 +33,7 @@ def generate_pair_info() -> tuple[str, str, str]:
     return qr_string, service_name, pairing_password
 
 
-def do_pair_connect():
+def do_qr_pair_connect():
     pass
 
 
@@ -44,6 +46,11 @@ def print_title(title: str):
 
 
 def main():
+    qr_pair_arg = "qr"
+    if len(sys.argv) > 1 and sys.argv[1] == qr_pair_arg:
+        do_qr_pair_connect()
+        return
+
     print_title("准备工作")
     print(
         """
@@ -99,6 +106,8 @@ def main():
     print_title("首次使用【二维码配对】进行无线连接")
     print(
         f"""
+使用此脚本
+  {sys.argv[0]} {qr_pair_arg}
 """,
         end="",
     )

@@ -7,8 +7,9 @@ requires-python = ">=3.14"
 dependencies = [
     "pyotp>=2.10.0",
     "qrcode[pil]>=8.2",
+    "zeroconf>=0.151.5",
 ]
 
 [[tool.uv.index]]
-url = "https://mirrors.ustc.edu.cn/pypi/simple"
+url = "https://mirrors.aliyun.com/pypi/simple/"
 default = true
