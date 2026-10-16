@@ -32,7 +32,11 @@ Space:: ClickClient(0.5, 0.5)
 Up:: Send("!b")
 
 ; 下方向键 点击书架第一本书
-Down:: ClickClient(0.17, 0.24)
+Down:: {
+    ClickClient(0.17, 0.3)
+    Sleep 1100
+    ClickClient(0.5, 0.5)
+}
 
 ; 右方向键 从右向左拖拽
 Right:: SwipeHorizontal(0.8, 0.5)
