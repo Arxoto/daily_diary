@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.8"
+# requires-python = ">=3.14"
 # dependencies = [
-#     "qrcode[pil]",
+#     "qrcode",
 #     "zeroconf>=0.136.2",
 # ]
 # ///
@@ -16,14 +16,50 @@ from collections.abc import Callable
 import qrcode
 from zeroconf import ServiceBrowser, ServiceListener, Zeroconf
 
+INPUT_QUIT = ["q", "quit"]
+INPUT_HELP = ["h", "help"]
+INPUT_GUIDE = ["g", "guide"]
+INPUT_QR_PAIRING = ["qr", "p", "pairing_browser"]
+INPUT_AUTO_CONNECT = ["c", "connect_browser"]
+
 PAIRING_TYPE = "_adb-tls-pairing._tcp.local."
 CONNECT_TYPE = "_adb-tls-connect._tcp.local."
 
 
+def help_input_keyword(kws: list[str]) -> str:
+    return "[ " + " / ".join(kws) + " ]"
+
+
+class GlobalContext:
+    def __init__(self) -> None:
+        self._zc: Zeroconf | None = None
+        self.connect_browser: ServiceBrowser | None = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        if self.connect_browser is not None:
+            try:
+                self.connect_browser.cancel()
+            except Exception:  # noqa: BLE001, S110
+                pass
+        if self._zc is not None:
+            try:
+                self._zc.close()
+            except Exception:  # noqa: BLE001, S110
+                pass
+
+    def use_zc(self) -> Zeroconf:
+        if self._zc is None:
+            self._zc = Zeroconf()
+        return self._zc
+
+
 def print_qr(ss: str):
-    qr = qrcode.QRCode()
+    qr = qrcode.QRCode(border=1)
     qr.add_data(ss)
-    qr.print_ascii(invert=True)
+    qr.print_ascii(invert=True, tty=sys.stdout.isatty())
 
 
 def generate_pair_info() -> tuple[str, str, str]:
@@ -39,102 +75,117 @@ def generate_pair_info() -> tuple[str, str, str]:
     return qr_payload, service_name, pairing_password
 
 
-class PairingListener(ServiceListener):
-    def __init__(self, on_found: Callable[[str], None]):
+class AdbServiceListener(ServiceListener):
+    def __init__(
+        self, on_found: Callable[[str], None], expected_service_name: str | None = None
+    ):
         self._on_found = on_found
+        self._expected_service_name = expected_service_name
 
-    def add_service(self, zc, type_, name):
+    def _handle(self, zc: Zeroconf, type_: str, name: str):
         info = zc.get_service_info(type_, name)
-        if not info or not info.parsed_addresses():
+        if not info:
             return
-        host = info.parsed_addresses()[0]
-        target = f"{host}:{info.port}"
+
+        if self._expected_service_name:
+            instance = info.name.split(".", 1)[0]
+            if instance != self._expected_service_name:
+                return
+
+        addresses = info.parsed_addresses()
+        if not addresses:
+            return
+
+        ipv4 = [a for a in addresses if ":" not in a]
+        host = ipv4[0] if ipv4 else addresses[0]
+        is_ipv6 = ":" in host
+        target = f"[{host}]:{info.port}" if is_ipv6 else f"{host}:{info.port}"
+
         self._on_found(target)
 
+    def add_service(self, zc, type_, name):
+        self._handle(zc, type_, name)
+
     def update_service(self, zc, type_, name):
-        self.add_service(zc, type_, name)
+        self._handle(zc, type_, name)
 
     def remove_service(self, zc, type_, name):
         pass
 
 
-def do_qr_pair_connect():
-    [qr_payload, _adb_service_name, adb_pair_pwd] = generate_pair_info()
+def start_connect_browser(ctx: GlobalContext):
+    if ctx.connect_browser is not None:
+        print("[INFO] 已启动自动连接服务")
+        return
 
-    # 结果接收
-    def new_found_target() -> tuple[
-        threading.Event, Callable[[str], None], Callable[[], str]
-    ]:
-        found = threading.Event()
-        target_holder = ""
+    def on_found(target: str) -> None:
+        print(f"执行以下命令完成连接：\n    adb connect {target}")
+        print("执行以下命令启动 scrcpy\n    scrcpy")
 
-        def on_found(target: str):
-            if found.is_set():
-                return
-            nonlocal target_holder
-            target_holder = target
-            found.set()
+    zc = ctx.use_zc()
+    listener = AdbServiceListener(on_found)
+    browser = ServiceBrowser(zc, CONNECT_TYPE, listener)
+    ctx.connect_browser = browser
+    print("[INFO] 成功启动自动连接服务")
 
-        def get_target() -> str:
-            return target_holder
 
-        return (found, on_found, get_target)
+def do_qr_pairing(ctx: GlobalContext):
+    start_connect_browser(ctx)
 
-    def new_browser(
-        zc: Zeroconf,
-        type_: str,
-    ) -> tuple[threading.Event, Callable[[], str], ServiceBrowser]:
-        (found, on_found, get_target) = new_found_target()
-        listener = PairingListener(on_found)
-        browser = ServiceBrowser(zc, type_, listener)
-        return (found, get_target, browser)
+    qr_payload, adb_service_name, adb_pair_pwd = generate_pair_info()
 
-    # 启动 mDNS 监听
-    zc = Zeroconf()
-    (pairing_found, pairing_get, _pairing_browser) = new_browser(zc, PAIRING_TYPE)
-    (connect_found, connect_get, _connect_browser) = new_browser(zc, CONNECT_TYPE)
+    found, on_found, get_target = _found_target_once()
 
-    # 打印二维码
-    print(
-        "手机：【设置】-【系统】-【开发者选项】-开启并进入【无线调试】-点击【使用二维码配对设备】并扫描"
-    )
-    print_qr(qr_payload)
+    zc = ctx.use_zc()
+    listener = AdbServiceListener(on_found, expected_service_name=adb_service_name)
+    browser = ServiceBrowser(zc, PAIRING_TYPE, listener)
 
     try:
-        while not pairing_found.wait(timeout=0.5):
-            pass
-        print("执行以下命令完成配对：")
-        print(f"    adb pair {pairing_get()} {adb_pair_pwd}")
-        print("执行以下命令确认连接状态：")
-        print("    adb devices")
+        print_qr(qr_payload)
+        print(
+            "手机：【设置】-【系统】-【开发者选项】-开启并进入【无线调试】-点击【使用二维码配对设备】并扫描"
+        )
 
-        while not connect_found.wait(timeout=0.5):
+        # 等待手机扫描二维码
+        while not found.wait(timeout=0.5):
             pass
-        print("执行以下命令完成连接（若配对完后没有自动连接）：")
-        print(f"    adb connect {connect_get()}")
-        print("执行以下命令启动 scrcpy")
-        print("    scrcpy")
+
+        print(f"执行以下命令完成配对：\n    adb pair {get_target()} {adb_pair_pwd}")
+        print("执行以下命令确认是否自动连接：\n    adb devices")
     except KeyboardInterrupt:
-        print("[!] 已取消")
-
+        print("[WARN] 已中止【二维码配对】")
     finally:
-        zc.close()
+        browser.cancel()
+
+
+def _found_target_once() -> tuple[
+    threading.Event, Callable[[str], None], Callable[[], str]
+]:
+    found = threading.Event()
+    target_holder = ""
+
+    def on_found(target: str):
+        if found.is_set():
+            return
+        nonlocal target_holder
+        target_holder = target
+        found.set()
+
+    def get_target() -> str:
+        return target_holder
+
+    return found, on_found, get_target
 
 
 def print_title(title: str):
-    print(end="\n" * 2)
+    print("\n")
     print("=" * 60)
     for line in title.splitlines():
         print(" ", line)
     print("=" * 60)
 
 
-def main():
-    qr_pair_arg = "qr"
-    if len(sys.argv) > 1 and sys.argv[1] == qr_pair_arg:
-        do_qr_pair_connect()
-        return
-
+def print_guide():
     print_title("准备工作")
     print(
         """
@@ -145,7 +196,7 @@ def main():
         end="",
     )
 
-    print_title("首次通过 USB 连接")
+    print_title("通过 USB 连接，完成初次连接")
     print(
         """
 1. 通过 USB 连接
@@ -169,10 +220,10 @@ def main():
         end="",
     )
 
-    print_title("首次使用【配对码】进行无线连接")
+    print_title("使用【配对码】，完成初次无线连接")
     print(
         """
-1. 使用【配对码】进行首次连接
+1. 使用【配对码】进行初次连接
   开启配对码配对：【设置】-【系统】-【开发者选项】-开启并进入【无线调试】-点击【使用配对码配对设备】保持打开
   执行以下命令，完成配对（端口是配对码的端口）
     adb pair ip:port # 并输入配对码
@@ -187,11 +238,10 @@ def main():
         end="",
     )
 
-    print_title("首次使用【二维码配对】进行无线连接")
+    print_title("使用【二维码配对】，完成初次无线连接")
     print(
-        f"""
-使用此脚本
-  {sys.argv[0]} {qr_pair_arg}
+        """
+需要启动服务，根据下面的输入提示完成操作
 """,
         end="",
     )
@@ -208,6 +258,42 @@ def main():
 """,
         end="",
     )
+
+
+def print_help():
+    print_title("输入说明")
+    print(
+        f"""
+输入 {help_input_keyword(INPUT_QR_PAIRING)} 进行【二维码配对】（同时拉起 mDNS 服务）
+输入 {help_input_keyword(INPUT_AUTO_CONNECT)} 拉起 mDNS 服务以自动进行无线连接
+输入 {help_input_keyword(INPUT_GUIDE)} 打印 adb scrcpy 连接指导
+输入 {help_input_keyword(INPUT_HELP)} 打印输入说明
+输入 {help_input_keyword(INPUT_QUIT)} 退出
+""",
+        end="",
+    )
+
+
+def main():
+    with GlobalContext() as ctx:
+        print_guide()
+        print_help()
+        while True:
+            # divider_line
+            text = input("\n" + "-" * 60 + "\n\n输入命令: ").strip().lower()
+            if text in INPUT_QUIT:
+                break
+            elif text in INPUT_HELP:
+                print_help()
+            elif text in INPUT_GUIDE:
+                print_guide()
+            elif text in INPUT_QR_PAIRING:
+                do_qr_pairing(ctx)
+            elif text in INPUT_AUTO_CONNECT:
+                start_connect_browser(ctx)
+            elif text:
+                print("[ERROR] 未知命令")
+                print_help()
 
 
 if __name__ == "__main__":
