@@ -115,18 +115,22 @@ class AdbServiceListener(ServiceListener):
 
 def start_connect_browser(ctx: GlobalContext):
     if ctx.connect_browser is not None:
-        print("[INFO] 已启动自动连接服务")
+        print("\n[INFO] 已启动自动连接服务")
         return
 
     def on_found(target: str) -> None:
-        print(f"执行以下命令完成连接：\n    adb connect {target}")
-        print("执行以下命令启动 scrcpy\n    scrcpy")
+        print(f"""
+执行以下命令完成连接：
+    adb connect {target}
+执行以下命令启动 scrcpy
+    scrcpy
+""")
 
     zc = ctx.use_zc()
     listener = AdbServiceListener(on_found)
     browser = ServiceBrowser(zc, CONNECT_TYPE, listener)
     ctx.connect_browser = browser
-    print("[INFO] 成功启动自动连接服务")
+    print("\n[INFO] 成功启动自动连接服务")
 
 
 def do_qr_pairing(ctx: GlobalContext):
@@ -143,17 +147,21 @@ def do_qr_pairing(ctx: GlobalContext):
     try:
         print_qr(qr_payload)
         print(
-            "手机：【设置】-【系统】-【开发者选项】-开启并进入【无线调试】-点击【使用二维码配对设备】并扫描"
+            "\n手机端 【设置】-【系统】-【开发者选项】-开启并进入【无线调试】-点击【使用二维码配对设备】并扫描"
         )
 
         # 等待手机扫描二维码
         while not found.wait(timeout=0.5):
             pass
 
-        print(f"执行以下命令完成配对：\n    adb pair {get_target()} {adb_pair_pwd}")
-        print("执行以下命令确认是否自动连接：\n    adb devices")
+        print(f"""
+执行以下命令完成配对：
+    adb pair {get_target()} {adb_pair_pwd}
+执行以下命令确认是否自动连接：
+    adb devices
+""")
     except KeyboardInterrupt:
-        print("[WARN] 已中止【二维码配对】")
+        print("\n[WARN] 已中止【二维码配对】")
     finally:
         browser.cancel()
 
@@ -178,11 +186,11 @@ def _found_target_once() -> tuple[
 
 
 def print_title(title: str):
-    print("\n")
-    print("=" * 60)
+    content = ["", "", "=" * 60]
     for line in title.splitlines():
-        print(" ", line)
-    print("=" * 60)
+        content.append("  " + line)
+    content.append("=" * 60)
+    print(*content, sep="\n")
 
 
 def print_guide():
@@ -292,7 +300,7 @@ def main():
             elif text in INPUT_AUTO_CONNECT:
                 start_connect_browser(ctx)
             elif text:
-                print("[ERROR] 未知命令")
+                print("\n[ERROR] 未知命令")
                 print_help()
 
 
