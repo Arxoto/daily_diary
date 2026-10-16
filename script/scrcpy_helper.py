@@ -7,10 +7,14 @@
 # ]
 # ///
 
+import queue
 import random
+import shutil
 import string
+import subprocess
 import sys
 import threading
+import traceback
 from collections.abc import Callable
 
 import qrcode
@@ -21,9 +25,44 @@ INPUT_HELP = ["h", "help"]
 INPUT_GUIDE = ["g", "guide"]
 INPUT_QR_PAIRING = ["qr", "p", "pairing_browser"]
 INPUT_AUTO_CONNECT = ["c", "connect_browser"]
+INPUT_DEVICES = ["d", "devices"]
 
 PAIRING_TYPE = "_adb-tls-pairing._tcp.local."
 CONNECT_TYPE = "_adb-tls-connect._tcp.local."
+
+
+MSG_QUEUE: queue.Queue[list[str]] = queue.Queue()
+
+
+def process_worker():
+    while True:
+        cmd = MSG_QUEUE.get()
+        try:
+            subprocess.run(
+                cmd,
+                stdin=subprocess.DEVNULL,  # 不接收标准输入
+                stdout=None,  # 继承父进程 stdout，直接打印到屏幕
+                stderr=None,  # 继承父进程 stderr，直接打印到屏幕
+                check=True,  # 返回码非 0 时抛 CalledProcessError
+                text=True,  # 文本模式，输出为 str
+                timeout=9,  # 超时保护
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"[ERROR] 命令执行失败，返回码 {e.returncode}: {cmd}")
+        except subprocess.TimeoutExpired:
+            print(f"[ERROR] 命令执行超时: {cmd}")
+        except FileNotFoundError:
+            print(f"[ERROR] 找不到命令: {cmd[0]}")
+        except PermissionError:
+            print(f"[ERROR] 没有权限执行: {cmd[0]}")
+        except Exception:  # noqa: BLE001
+            # 正式环境建议 logger.exception(text) 会自动打印堆栈和异常类型以及描述，这里是简单工具所以不用
+            traceback.print_exc()
+        finally:
+            MSG_QUEUE.task_done()
+
+
+threading.Thread(target=process_worker, daemon=True).start()
 
 
 def help_input_keyword(kws: list[str]) -> str:
@@ -34,6 +73,7 @@ class GlobalContext:
     def __init__(self) -> None:
         self._zc: Zeroconf | None = None
         self.connect_browser: ServiceBrowser | None = None
+        self._has_adb = shutil.which("adb") is not None
 
     def __enter__(self):
         return self
@@ -54,6 +94,16 @@ class GlobalContext:
         if self._zc is None:
             self._zc = Zeroconf()
         return self._zc
+
+    def run_adb(self, *args: str) -> bool:
+        if self._has_adb:
+            MSG_QUEUE.put(["adb", *args])
+            return True
+        return False
+
+    def try_run_adb(self, *args: str) -> None:
+        if not self.run_adb(*args):
+            print("[ERROR] adb 命令不存在")
 
 
 def print_qr(ss: str):
@@ -115,22 +165,21 @@ class AdbServiceListener(ServiceListener):
 
 def start_connect_browser(ctx: GlobalContext):
     if ctx.connect_browser is not None:
-        print("\n[INFO] 已启动自动连接服务")
+        print("[INFO] 已启动自动连接服务")
         return
 
     def on_found(target: str) -> None:
-        print(f"""
+        if not ctx.run_adb("connect", target):
+            print(f"""
 执行以下命令完成连接：
     adb connect {target}
-执行以下命令启动 scrcpy
-    scrcpy
 """)
 
     zc = ctx.use_zc()
     listener = AdbServiceListener(on_found)
     browser = ServiceBrowser(zc, CONNECT_TYPE, listener)
     ctx.connect_browser = browser
-    print("\n[INFO] 成功启动自动连接服务")
+    print("[INFO] 成功启动自动连接服务")
 
 
 def do_qr_pairing(ctx: GlobalContext):
@@ -147,21 +196,20 @@ def do_qr_pairing(ctx: GlobalContext):
     try:
         print_qr(qr_payload)
         print(
-            "\n手机端 【设置】-【系统】-【开发者选项】-开启并进入【无线调试】-点击【使用二维码配对设备】并扫描"
+            "手机端 【设置】-【系统】-【开发者选项】-开启并进入【无线调试】-点击【使用二维码配对设备】并扫描"
         )
 
         # 等待手机扫描二维码
         while not found.wait(timeout=0.5):
             pass
 
-        print(f"""
+        if not ctx.run_adb("pair", get_target(), adb_pair_pwd):
+            print(f"""
 执行以下命令完成配对：
     adb pair {get_target()} {adb_pair_pwd}
-执行以下命令确认是否自动连接：
-    adb devices
 """)
     except KeyboardInterrupt:
-        print("\n[WARN] 已中止【二维码配对】")
+        print("[WARN] 已中止【二维码配对】")
     finally:
         browser.cancel()
 
@@ -272,6 +320,7 @@ def print_help():
     print_title("输入说明")
     print(
         f"""
+输入 {help_input_keyword(INPUT_DEVICES)} 执行 `adb devices` 命令
 输入 {help_input_keyword(INPUT_QR_PAIRING)} 进行【二维码配对】（同时拉起 mDNS 服务）
 输入 {help_input_keyword(INPUT_AUTO_CONNECT)} 拉起 mDNS 服务以自动进行无线连接
 输入 {help_input_keyword(INPUT_GUIDE)} 打印 adb scrcpy 连接指导
@@ -288,7 +337,7 @@ def main():
         print_help()
         while True:
             # divider_line
-            text = input("\n" + "-" * 60 + "\n\n输入命令: ").strip().lower()
+            text = input("\n" + "-" * 60 + "\n\n输入命令:\n").strip().lower()
             if text in INPUT_QUIT:
                 break
             elif text in INPUT_HELP:
@@ -299,8 +348,10 @@ def main():
                 do_qr_pairing(ctx)
             elif text in INPUT_AUTO_CONNECT:
                 start_connect_browser(ctx)
+            elif text in INPUT_DEVICES:
+                ctx.try_run_adb("devices")
             elif text:
-                print("\n[ERROR] 未知命令")
+                print("[ERROR] 未知命令")
                 print_help()
 
 
