@@ -65,6 +65,9 @@ SwipeHorizontal(fromRatio, toRatio) {
 ; GUI
 ; ============================================================
 
+MyGui := Gui("+AlwaysOnTop -MinimizeBox -MaximizeBox", "scrcpy 控制面板")
+MyGui.SetFont("s10", "Segoe UI")
+
 ; 系统快捷键
 shortcuts := [
     ["BACK", "!b"],
@@ -82,9 +85,6 @@ shortcuts := [
     ["水平翻转", "{Alt down}{Shift down}{Left}{Shift up}{Alt up}"],
     ["垂直翻转", "{Alt down}{Shift down}{Up}{Shift up}{Alt up}"],
 ]
-
-MyGui := Gui("+AlwaysOnTop -MinimizeBox -MaximizeBox", "scrcpy 控制面板")
-MyGui.SetFont("s10", "Segoe UI")
 
 ; 每行几个按钮
 cols := 8
@@ -110,6 +110,10 @@ for index, item in shortcuts {
     btn.OnEvent("Click", SendShortcut.Bind(item[2]))
 }
 
+; ============================================================
+; 【阅读】热键
+; ============================================================
+
 readerHotkeyTextOn := "阅读热键已开启"
 readerHotkeyTextOff := "阅读热键已关闭"
 readerHotkeyBtn := MyGui.AddButton(
@@ -122,13 +126,6 @@ ToggleHotkeys(*) {
     readerHotkeysEnabled := !readerHotkeysEnabled
     readerHotkeyBtn.Text := readerHotkeysEnabled ? readerHotkeyTextOn : readerHotkeyTextOff
 }
-
-MyGui.OnEvent("Close", (*) => ExitApp())
-MyGui.Show("AutoSize")
-
-; ============================================================
-; 【阅读】热键
-; ============================================================
 
 #HotIf WinActive(SCRCPY_WIN) && readerHotkeysEnabled
 
@@ -145,3 +142,10 @@ Right:: SwipeHorizontal(0.8, 0.2)
 Left:: SwipeHorizontal(0.2, 0.8)
 
 #HotIf
+
+; ============================================================
+; 窗口
+; ============================================================
+
+MyGui.OnEvent("Close", (*) => ExitApp())
+MyGui.Show("AutoSize")
