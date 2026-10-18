@@ -22,25 +22,14 @@ SwipeHorizontal(fromRatio, toRatio) {
     fromX := Round(cw * fromRatio)
     toX := Round(cw * toRatio)
 
-    ; 手动实现 MouseClickDrag
-    ; 先慢后快，在打开导航栏的时候也能正常翻页
+    ; 手动实现 MouseClickDrag 在打开导航栏的时候也能正常翻页
     MouseMove(fromX, posY, 0)
     MouseClick("Left", , , 1, 0, "D")
     try {
-        firstLoop := 10
-        firstSleep := 15
-        secondLoop := 5
-        secondSleep := 10
-        totalLoop := firstLoop + secondLoop
+        loopCount := 50
         deltaX := toX - fromX
-        loop firstLoop {
-            Sleep(firstSleep)
-            currentX := Round(fromX + deltaX / totalLoop * A_Index)
-            MouseMove(currentX, posY, 0)
-        }
-        loop secondLoop {
-            Sleep(secondSleep)
-            currentX := Round(fromX + deltaX / totalLoop * (firstLoop + A_Index))
+        loop loopCount {
+            currentX := Round(fromX + deltaX / loopCount * A_Index)
             MouseMove(currentX, posY, 0)
         }
     } finally {
