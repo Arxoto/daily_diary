@@ -123,6 +123,7 @@ ToggleHotkeys(*) {
     readerHotkeyBtn.Text := readerHotkeysEnabled ? readerHotkeyTextOn : readerHotkeyTextOff
 }
 
+MyGui.OnEvent("Close", (*) => ExitApp())
 MyGui.Show("AutoSize")
 
 ; ============================================================
