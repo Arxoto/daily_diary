@@ -16,12 +16,14 @@ import sys
 import threading
 import traceback
 from collections.abc import Callable
+from pathlib import Path
 
 import qrcode
 from zeroconf import ServiceBrowser, ServiceListener, Zeroconf
 
 INPUT_QUIT = ["q", "quit"]
 INPUT_HELP = ["h", "help"]
+INPUT_OUTPUT_SCRCPY_HELP = ["output_scrcpy_help"]
 INPUT_GUIDE = ["g", "guide"]
 INPUT_QR_PAIRING = ["qr", "p", "pairing_browser"]
 INPUT_AUTO_CONNECT = ["c", "connect_browser"]
@@ -104,6 +106,19 @@ class GlobalContext:
     def try_run_adb(self, *args: str) -> None:
         if not self.run_adb(*args):
             print("[ERROR] adb 命令不存在")
+
+    def output_scrcpy_help(self) -> None:
+        file_name = "scrcpy_help.txt"
+        file_path = Path(__file__).resolve().parent / file_name
+        with open(file_path, "w", encoding="utf-8") as f:
+            result = subprocess.run(
+                ["scrcpy", "--help"],
+                check=False,
+                stdout=f,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+            print(f"scrcpy --help 已写入 {file_name}, return code {result.returncode}")
 
 
 def print_qr(ss: str):
@@ -324,6 +339,7 @@ def print_help():
 输入 {help_input_keyword(INPUT_QR_PAIRING)} 进行【二维码配对】（同时拉起 mDNS 服务）
 输入 {help_input_keyword(INPUT_AUTO_CONNECT)} 拉起 mDNS 服务以自动进行无线连接
 输入 {help_input_keyword(INPUT_GUIDE)} 打印 adb scrcpy 连接指导
+输入 {help_input_keyword(INPUT_OUTPUT_SCRCPY_HELP)} 输出 scrcpy --help 至文件
 输入 {help_input_keyword(INPUT_HELP)} 打印输入说明
 输入 {help_input_keyword(INPUT_QUIT)} 退出
 """,
@@ -342,6 +358,8 @@ def main():
                 break
             elif text in INPUT_HELP:
                 print_help()
+            elif text in INPUT_OUTPUT_SCRCPY_HELP:
+                ctx.output_scrcpy_help()
             elif text in INPUT_GUIDE:
                 print_guide()
             elif text in INPUT_QR_PAIRING:
