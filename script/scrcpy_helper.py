@@ -21,13 +21,14 @@ from pathlib import Path
 import qrcode
 from zeroconf import ServiceBrowser, ServiceListener, Zeroconf
 
-INPUT_QUIT = ["q", "quit"]
-INPUT_HELP = ["h", "help"]
-INPUT_OUTPUT_SCRCPY_HELP = ["output_scrcpy_help"]
-INPUT_GUIDE = ["g", "guide"]
-INPUT_QR_PAIRING = ["qr", "p", "pairing_browser"]
-INPUT_AUTO_CONNECT = ["c", "connect_browser"]
-INPUT_DEVICES = ["d", "devices"]
+INPUT_AUTO_CONNECT = (["c", "connect_browser"], "拉起 mDNS 服务以自动进行无线连接")
+INPUT_QR_PAIRING = (["p", "pairing_browser"], "拉起 mDNS 服务以自动【二维码配对】")
+INPUT_DEVICES = (["d", "devices"], "执行 `adb devices` 命令")
+INPUT_LIST_AHK = (["l", "list_ahk"], "列出 ahk 辅助脚本")
+INPUT_HELP_SCRCPY = (["help_scrcpy"], "输出 scrcpy --help 至文件")
+INPUT_HELP_CTRL = (["help_controller"], "打印操作控制说明")
+INPUT_HELP = (["h", "help"], "打印 adb scrcpy 连接帮助")
+INPUT_QUIT = (["q", "quit"], "退出")
 
 PAIRING_TYPE = "_adb-tls-pairing._tcp.local."
 CONNECT_TYPE = "_adb-tls-connect._tcp.local."
@@ -119,6 +120,14 @@ class GlobalContext:
                 text=True,
             )
             print(f"scrcpy --help 已写入 {file_name}, return code {result.returncode}")
+
+    def list_ahk(self) -> None:
+        base = Path(__file__).resolve().parent
+        paths = (str(p.resolve()) for p in base.glob("scrcpy_*.ahk"))
+        s = "找到以下 ahk 脚本:\n"
+        for p in paths:
+            s += f"    {p}\n"
+        print(s)
 
 
 def print_qr(ss: str):
@@ -256,7 +265,7 @@ def print_title(title: str):
     print(*content, sep="\n")
 
 
-def print_guide():
+def print_help_guide():
     print_title("准备工作")
     print(
         """
@@ -331,17 +340,18 @@ def print_guide():
     )
 
 
-def print_help():
+def print_help_ctrl():
     print_title("输入说明")
     print(
         f"""
-输入 {help_input_keyword(INPUT_DEVICES)} 执行 `adb devices` 命令
-输入 {help_input_keyword(INPUT_QR_PAIRING)} 进行【二维码配对】（同时拉起 mDNS 服务）
-输入 {help_input_keyword(INPUT_AUTO_CONNECT)} 拉起 mDNS 服务以自动进行无线连接
-输入 {help_input_keyword(INPUT_GUIDE)} 打印 adb scrcpy 连接指导
-输入 {help_input_keyword(INPUT_OUTPUT_SCRCPY_HELP)} 输出 scrcpy --help 至文件
-输入 {help_input_keyword(INPUT_HELP)} 打印输入说明
-输入 {help_input_keyword(INPUT_QUIT)} 退出
+输入 {help_input_keyword(INPUT_AUTO_CONNECT[0])} {INPUT_AUTO_CONNECT[1]}
+输入 {help_input_keyword(INPUT_QR_PAIRING[0])} {INPUT_QR_PAIRING[1]}
+输入 {help_input_keyword(INPUT_DEVICES[0])} {INPUT_DEVICES[1]}
+输入 {help_input_keyword(INPUT_LIST_AHK[0])} {INPUT_LIST_AHK[1]}
+输入 {help_input_keyword(INPUT_HELP_SCRCPY[0])} {INPUT_HELP_SCRCPY[1]}
+输入 {help_input_keyword(INPUT_HELP_CTRL[0])} {INPUT_HELP_CTRL[1]}
+输入 {help_input_keyword(INPUT_HELP[0])} {INPUT_HELP[1]}
+输入 {help_input_keyword(INPUT_QUIT[0])} {INPUT_QUIT[1]}
 """,
         end="",
     )
@@ -349,28 +359,31 @@ def print_help():
 
 def main():
     with GlobalContext() as ctx:
-        print_guide()
-        print_help()
+        print_help_guide()
+        print_help_ctrl()
         while True:
             # divider_line
             text = input("\n" + "-" * 60 + "\n\n输入命令:\n").strip().lower()
-            if text in INPUT_QUIT:
-                break
-            elif text in INPUT_HELP:
-                print_help()
-            elif text in INPUT_OUTPUT_SCRCPY_HELP:
-                ctx.output_scrcpy_help()
-            elif text in INPUT_GUIDE:
-                print_guide()
-            elif text in INPUT_QR_PAIRING:
-                do_qr_pairing(ctx)
-            elif text in INPUT_AUTO_CONNECT:
+            if text in INPUT_AUTO_CONNECT[0]:
                 start_connect_browser(ctx)
-            elif text in INPUT_DEVICES:
+            elif text in INPUT_QR_PAIRING[0]:
+                do_qr_pairing(ctx)
+            elif text in INPUT_DEVICES[0]:
                 ctx.try_run_adb("devices")
+            elif text in INPUT_LIST_AHK[0]:
+                ctx.list_ahk()
+            elif text in INPUT_HELP_SCRCPY[0]:
+                ctx.output_scrcpy_help()
+            elif text in INPUT_HELP_CTRL[0]:
+                print_help_ctrl()
+            elif text in INPUT_HELP[0]:
+                print_help_guide()
+                print_help_ctrl()
+            elif text in INPUT_QUIT[0]:
+                break
             elif text:
                 print("[ERROR] 未知命令")
-                print_help()
+                print_help_ctrl()
 
 
 if __name__ == "__main__":
