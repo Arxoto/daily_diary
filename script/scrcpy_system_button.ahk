@@ -30,8 +30,8 @@ SendShortcut(keys, *) {
 shortcuts := [
     {label: "BACK", keys: BuildKeys(MOD_KEY, "b")},
     {label: "HOME", keys: BuildKeys(MOD_KEY, "h")},
-    {label: "切换", keys: BuildKeys(MOD_KEY, "s")},
-    {label: "关闭屏幕", keys: BuildKeys(MOD_KEY, "o")},
+    {label: "概览屏幕", keys: BuildKeys(MOD_KEY, "s")},
+    {label: "关闭显示", keys: BuildKeys(MOD_KEY, "o")},
     {label: "电源键", keys: BuildKeys(MOD_KEY, "p")},
     {label: "解锁", keys: BuildKeys(MOD_KEY, "m")},
     {label: "音量+", keys: BuildKeys(MOD_KEY, "Up")},
@@ -48,7 +48,7 @@ MyGui := Gui("+AlwaysOnTop -MinimizeBox -MaximizeBox", "scrcpy 控制")
 MyGui.SetFont("s10", "Segoe UI")
 
 ; 每行几个按钮
-cols := 1
+cols := 8
 btnWidth := 120
 btnHeight := 30
 margin := 10
