@@ -68,9 +68,9 @@ Down:: {
 }
 
 ; 右方向键 从右向左拖拽
-Right:: SwipeHorizontal(0.8, 0.01)
+Right:: SwipeHorizontal(0.8, 0.2)
 
 ; 左方向键 从左向右拖拽
-Left:: SwipeHorizontal(0.2, 0.99)
+Left:: SwipeHorizontal(0.2, 0.8)
 
 #HotIf
