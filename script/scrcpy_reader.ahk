@@ -1,11 +1,14 @@
 #Requires AutoHotkey v2.0
+#SingleInstance Force
+
+targetExe := "ahk_exe scrcpy.exe"
 
 ; === 通用函数 ===
 
 ; 点击，相对坐标，在 scrcpy 客户区
 ClickClient(xRatio, yRatio) {
     CoordMode("Mouse", "Client")
-    WinGetClientPos(&cx, &cy, &cw, &ch, "ahk_exe scrcpy.exe")
+    WinGetClientPos(, , &cw, &ch, targetExe)
     MouseClick("Left", cw * xRatio, ch * yRatio)
     MouseMove(cw - 1, ch * 0.5, 0)
 }
@@ -13,7 +16,7 @@ ClickClient(xRatio, yRatio) {
 ; 横向滑动，相对坐标，在 scrcpy 客户区
 SwipeHorizontal(fromRatio, toRatio, durationMs := 10) {
     CoordMode("Mouse", "Client")
-    WinGetClientPos(&cx, &cy, &cw, &ch, "ahk_exe scrcpy.exe")
+    WinGetClientPos(, , &cw, &ch, targetExe)
 
     posY := ch * 0.5
 
@@ -23,7 +26,7 @@ SwipeHorizontal(fromRatio, toRatio, durationMs := 10) {
 
 ; === 热键 ===
 
-#HotIf WinActive("ahk_exe scrcpy.exe")
+#HotIf WinActive(targetExe)
 
 ; 空格 点击中心位置
 Space:: ClickClient(0.5, 0.5)
