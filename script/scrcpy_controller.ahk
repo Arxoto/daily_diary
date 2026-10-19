@@ -6,6 +6,9 @@
 ; ============================================================
 SCRCPY_WIN := "ahk_exe scrcpy.exe"
 
+; 一行有几列按钮，赋值 1 或 8
+COLS_IN_ROW := 1
+
 ; 快捷键开关（由 GUI 复选框控制，默认开启以保持原脚本行为）
 readerHotkeysEnabled := false
 
@@ -65,17 +68,21 @@ SwipeHorizontal(fromRatio, toRatio) {
 ; GUI
 ; ============================================================
 
-MyGui := Gui("+AlwaysOnTop -MinimizeBox -MaximizeBox", "scrcpy 控制面板")
+guiClass := "+AlwaysOnTop"
+if COLS_IN_ROW == 1 {
+    guiClass .= " -MinimizeBox -MaximizeBox"
+}
+MyGui := Gui(guiClass, "scrcpy 控制面板")
 MyGui.SetFont("s10", "Segoe UI")
 
 ; 系统快捷键
 shortcuts := [
-    ["BACK", "!b"],
-    ["HOME", "!h"],
-    ["概览屏幕", "!s"],
-    ["关闭显示", "!o"],
-    ["电源键", "!p"],
     ["解锁", "!m"],
+    ["电源键", "!p"],
+    ["关闭显示", "!o"],
+    ["概览屏幕", "!s"],
+    ["HOME", "!h"],
+    ["BACK", "!b"],
     ["复制", "!c"],
     ["粘贴", "!v"],
     ["音量+", "{Alt down}{Up}{Alt up}"],
@@ -86,27 +93,34 @@ shortcuts := [
     ["垂直翻转", "{Alt down}{Shift down}{Up}{Shift up}{Alt up}"],
 ]
 
-; 每行几个按钮
-cols := 8
 btnWidth := 120
 btnHeight := 30
 margin := 10
 
+btnCount := 0
+
 /**
  * 计算控件宽高和坐标
- * @param {Integer} index 编号
  * @returns {String} 控件选项
  */
-calcBtnPosition(index) {
-    col := Mod(index - 1, cols)
-    row := (index - 1) // cols
+genBtnPosition() {
+    global btnCount
+    col := Mod(btnCount, COLS_IN_ROW)
+    row := (btnCount) // COLS_IN_ROW
     x := margin + col * (btnWidth + margin)
     y := margin + row * (btnHeight + margin)
+    btnCount++
     return "w" btnWidth " h" btnHeight " x" x " y" y
 }
 
+; 标题栏宽度不够，不显示最小化和最大化按钮，手动添加
+if COLS_IN_ROW == 1 {
+    btn := MyGui.AddButton(genBtnPosition(), "【收起面板】")
+    btn.OnEvent("Click", (*) => MyGui.Minimize())
+}
+
 for index, item in shortcuts {
-    btn := MyGui.AddButton(calcBtnPosition(index), item[1])
+    btn := MyGui.AddButton(genBtnPosition(), item[1])
     btn.OnEvent("Click", SendShortcut.Bind(item[2]))
 }
 
@@ -117,7 +131,7 @@ for index, item in shortcuts {
 readerHotkeyTextOn := "阅读热键已开启"
 readerHotkeyTextOff := "阅读热键已关闭"
 readerHotkeyBtn := MyGui.AddButton(
-    calcBtnPosition(shortcuts.Length + 1),
+    genBtnPosition(),
     readerHotkeysEnabled ? readerHotkeyTextOn : readerHotkeyTextOff
 )
 readerHotkeyBtn.OnEvent("Click", ToggleHotkeys)
