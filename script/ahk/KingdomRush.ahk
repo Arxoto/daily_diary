@@ -3,9 +3,9 @@
 ; 若无效，尝试以管理员身份运行本脚本
 
 KR_VERSION_CONFIG := [
-    ["ahk_exe Kingdom Rush.exe", "版本：初代"],
-    ["ahk_exe Kingdom Rush Frontiers.exe", "版本：前线"],
-    ["ahk_exe Kingdom Rush Origins.exe", "版本：起源"],
+    ["ahk_exe Kingdom Rush.exe", "版本：初代", 0.93, 0.96],
+    ["ahk_exe Kingdom Rush Frontiers.exe", "版本：前线", 0.96, 0.96],
+    ["ahk_exe Kingdom Rush Origins.exe", "版本：起源", 0.96, 0.96],
 ]
 
 g := Gui("+AlwaysOnTop -MinimizeBox", "KR 点击器")
@@ -56,16 +56,16 @@ DoClick() {
     catch
         return
 
-    x := Round(cw * 0.96)
-    y := Round(ch * 0.96)
+    x := Round(cw * KR_VERSION_CONFIG[targetVersion][3])
+    y := Round(ch * KR_VERSION_CONFIG[targetVersion][4])
 
     lParam := (y << 16) | x
 
-    ; WM_MOUSEMOVE  —— 部分程序靠它更新"当前鼠标位置"
+    ; WM_MOUSEMOVE
     PostMessage(0x200, 0, lParam, , "ahk_id " hwnd)
-    ; WM_LBUTTONDOWN —— wParam = MK_LBUTTON(0x1) 表示左键按下
+    ; WM_LBUTTONDOWN, wParam = MK_LBUTTON(0x1)
     PostMessage(0x201, 0x1, lParam, , "ahk_id " hwnd)
-    ; WM_LBUTTONUP   —— wParam = 0
+    ; WM_LBUTTONUP
     PostMessage(0x202, 0, lParam, , "ahk_id " hwnd)
 }
 
